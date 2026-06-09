@@ -250,72 +250,52 @@ const g = StyleSheet.create({
 // ─── Calendar Section ─────────────────────────────────────────────────────────
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_LABELS  = ['S','M','T','W','T','F','S'];
+const DAY_SHORT   = ['M','T','W','T','F','S','S'];
 
-function CalendarSection({ habits, speciesColor }) {
-  const now = new Date();
-  const [year, setYear]   = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
+function DateSection({ habits, speciesColor }) {
+  const now      = new Date();
   const todayStr = today();
   const rgb      = hexToRgb(speciesColor);
 
-  function prevMonth() {
-    if (month === 0) { setYear(y => y - 1); setMonth(11); }
-    else setMonth(m => m - 1);
-  }
-  function nextMonth() {
-    if (month === 11) { setYear(y => y + 1); setMonth(0); }
-    else setMonth(m => m + 1);
-  }
+  const dow    = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1));
+  monday.setHours(0, 0, 0, 0);
 
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const daysInMonth    = new Date(year, month + 1, 0).getDate();
-
-  const cells = [
-    ...Array(firstDayOfWeek).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  while (cells.length % 7 !== 0) cells.push(null);
-
-  function getRatio(day) {
-    if (!habits.length) return 0;
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    return habits.filter(h => h.completions.includes(dateStr)).length / habits.length;
-  }
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d  = new Date(monday);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
 
   return (
-    <View style={cal.container}>
-      <View style={cal.header}>
-        <Pressable onPress={prevMonth} hitSlop={10}><Text style={cal.nav}>‹</Text></Pressable>
-        <Text style={cal.month}>{MONTH_NAMES[month].slice(0,3)} {year}</Text>
-        <Pressable onPress={nextMonth} hitSlop={10}><Text style={cal.nav}>›</Text></Pressable>
+    <View style={ds.container}>
+      <View style={ds.hero}>
+        <Text style={ds.monthLbl}>{MONTH_NAMES[now.getMonth()].toUpperCase()}</Text>
+        <Text style={[ds.dayNum, { color: speciesColor }]}>{now.getDate()}</Text>
+        <Text style={ds.yearLbl}>{now.getFullYear()}</Text>
       </View>
 
-      <View style={cal.labelRow}>
-        {DAY_LABELS.map((d, i) => <Text key={i} style={cal.label}>{d}</Text>)}
-      </View>
-
-      <View style={cal.grid}>
-        {cells.map((day, i) => {
-          if (!day) return <View key={`e${i}`} style={cal.cell} />;
-          const dateStr  = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      <View style={ds.strip}>
+        {weekDays.map((d, i) => {
+          const dateStr  = d.toISOString().slice(0, 10);
           const isToday  = dateStr === todayStr;
           const isFuture = dateStr > todayStr;
-          const ratio    = isFuture ? 0 : getRatio(day);
+          const ratio    = isFuture || !habits.length ? 0
+            : habits.filter(h => h.completions.includes(dateStr)).length / habits.length;
+          const dotBg    = !isFuture && ratio > 0
+            ? `rgba(${rgb},${(0.25 + ratio * 0.65).toFixed(2)})` : 'transparent';
+
           return (
-            <View key={`d${day}`} style={cal.cell}>
+            <View key={i} style={ds.wday}>
+              <Text style={ds.wdayLbl}>{DAY_SHORT[i]}</Text>
               <View style={[
-                cal.dot,
-                isToday                         && { backgroundColor: speciesColor },
-                !isToday && ratio > 0           && { backgroundColor: `rgba(${rgb},${(0.25 + ratio * 0.65).toFixed(2)})` },
+                ds.dot,
+                { borderColor: isToday ? speciesColor : '#2e2e3e', borderWidth: isToday ? 2 : 1.5,
+                  backgroundColor: dotBg, opacity: isFuture ? 0.25 : 1 },
               ]}>
-                <Text style={[
-                  cal.dayNum,
-                  isToday           && cal.dayToday,
-                  isFuture          && cal.dayFuture,
-                  !isToday && ratio === 1 && { color: '#fff', fontWeight: '700' },
-                ]}>
-                  {day}
+                <Text style={[ds.dotNum, isToday && { color: speciesColor, fontWeight: '800' }]}>
+                  {d.getDate()}
                 </Text>
               </View>
             </View>
@@ -326,19 +306,17 @@ function CalendarSection({ habits, speciesColor }) {
   );
 }
 
-const cal = StyleSheet.create({
-  container: { paddingHorizontal: 20, paddingBottom: 8 },
-  header:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
-  nav:       { fontSize: 22, color: '#7a7a9a', fontWeight: '300', paddingHorizontal: 8 },
-  month:     { fontSize: 13, fontWeight: '700', color: '#e8e8f0', letterSpacing: 0.5 },
-  labelRow:  { flexDirection: 'row', marginBottom: 4 },
-  label:     { flex: 1, textAlign: 'center', fontSize: 10, color: '#4a4a6a', fontWeight: '600' },
-  grid:      { flexDirection: 'row', flexWrap: 'wrap' },
-  cell:      { width: `${100/7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 1 },
-  dot:       { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  dayNum:    { fontSize: 11, color: '#7a7a9a', fontWeight: '500' },
-  dayToday:  { color: '#fff', fontWeight: '800' },
-  dayFuture: { color: '#2e2e3e' },
+const ds = StyleSheet.create({
+  container: { paddingHorizontal: 24, paddingBottom: 14 },
+  hero:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  monthLbl:  { flex: 1, fontSize: 11, fontWeight: '700', color: '#7a7a9a', letterSpacing: 2 },
+  dayNum:    { flex: 1, fontSize: 80, fontWeight: '900', lineHeight: 80, letterSpacing: -3, textAlign: 'center' },
+  yearLbl:   { flex: 1, fontSize: 11, fontWeight: '600', color: '#4a4a6a', letterSpacing: 2, textAlign: 'right' },
+  strip:     { flexDirection: 'row' },
+  wday:      { flex: 1, alignItems: 'center', gap: 4 },
+  wdayLbl:   { fontSize: 9, fontWeight: '700', color: '#4a4a6a', letterSpacing: 1 },
+  dot:       { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  dotNum:    { fontSize: 10, fontWeight: '500', color: '#4a4a6a' },
 });
 
 // ─── Bottom Bar (Safari-style) ────────────────────────────────────────────────
@@ -497,7 +475,7 @@ export default function HomeScreen({ data, onSave }) {
           onMarkAll={markAllDone}
           onLongPress={deleteHabit}
         />
-        <CalendarSection habits={habits} speciesColor={sp.color} />
+        <DateSection habits={habits} speciesColor={sp.color} />
         <BottomBar speciesColor={sp.color} onOpen={() => setModalVisible(true)} />
       </View>
       <AddModal

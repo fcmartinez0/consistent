@@ -244,63 +244,57 @@ body {
   line-height: 1;
 }
 
-/* Calendar */
-.cal-section {
-  flex-shrink: 0;
-  padding: 8px 20px 4px;
-}
-.cal-header {
+/* Date Section */
+.date-section { flex-shrink: 0; padding: 0 24px 14px; }
+.date-hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  padding: 0 2px;
+  margin-bottom: 14px;
 }
-.cal-nav {
-  background: none;
-  border: none;
-  font-family: inherit;
-  font-size: 22px;
-  font-weight: 300;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 0 8px;
-  line-height: 1;
-}
-.cal-month-label { font-size: 13px; font-weight: 700; letter-spacing: .4px; }
-.cal-day-labels, .cal-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-}
-.cal-day-label {
-  text-align: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--dim);
-  padding-bottom: 3px;
-}
-.cal-cell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1px 0;
-}
-.cal-dot {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.cal-num {
+.date-month-lbl {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   color: var(--muted);
-  line-height: 1;
+  text-transform: uppercase;
+  flex: 1;
 }
-.cal-num.today-num  { color: #fff; font-weight: 800; }
-.cal-num.future-num { color: var(--border); }
-.cal-num.full-num   { color: #fff; font-weight: 700; }
+.date-day-num {
+  font-size: 80px;
+  font-weight: 900;
+  color: var(--sp);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  text-align: center;
+  flex: 1;
+}
+.date-year-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--dim);
+  text-align: right;
+  flex: 1;
+}
+.week-strip { display: flex; }
+.wday { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.wday-lbl { font-size: 9px; font-weight: 700; color: var(--dim); letter-spacing: 0.06em; }
+.wday-dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background .2s, border-color .2s;
+}
+.wday-dot.is-today  { border: 2px solid var(--sp); }
+.wday-dot.is-future { opacity: 0.25; }
+.wday-num { font-size: 10px; font-weight: 500; color: var(--dim); line-height: 1; }
+.wday-dot.is-today .wday-num { color: var(--sp); font-weight: 800; }
 
 /* Bottom Bar */
 .bottom-bar {
@@ -438,14 +432,13 @@ body {
     <div class="habit-grid" id="habitGrid"></div>
   </div>
 
-  <div class="cal-section">
-    <div class="cal-header">
-      <button class="cal-nav" id="prevMonth">&#8249;</button>
-      <span class="cal-month-label" id="calMonthLabel"></span>
-      <button class="cal-nav" id="nextMonth">&#8250;</button>
+  <div class="date-section">
+    <div class="date-hero">
+      <span class="date-month-lbl" id="dateMonth"></span>
+      <span class="date-day-num"   id="dateDay"></span>
+      <span class="date-year-lbl"  id="dateYear"></span>
     </div>
-    <div class="cal-day-labels" id="calDayLabels"></div>
-    <div class="cal-grid" id="calGrid"></div>
+    <div class="week-strip" id="weekStrip"></div>
   </div>
 
   <div class="bottom-bar" id="addBar">
@@ -510,8 +503,7 @@ function load() {
 function save(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 let state = load();
-let calYear  = new Date().getFullYear();
-let calMonth = new Date().getMonth();
+const DAY_SHORT = ['M','T','W','T','F','S','S'];
 
 // ── Init ──────────────────────────────────────────
 function init() {
@@ -558,7 +550,7 @@ function showHome() {
   applySpeciesTheme();
   renderCharacter();
   renderHabits();
-  renderCalendar();
+  renderDate();
   bindHomeEvents();
 }
 
@@ -658,7 +650,7 @@ function markHabitDone(id, circleEl) {
   circleEl.addEventListener('animationend', () => circleEl.classList.remove('pop'), { once: true });
   renderCharacter();
   renderHabits();
-  renderCalendar();
+  renderDate();
 }
 
 function confirmDelete(id) {
@@ -667,62 +659,56 @@ function confirmDelete(id) {
     save(state);
     renderHabits();
     renderCharacter();
-    renderCalendar();
+    renderDate();
   }
 }
 
-function renderCalendar() {
-  const { habits } = state;
+function renderDate() {
+  const now = new Date();
   const sp  = getSpecies();
-  const rgb = hexToRgb(sp.color);
+  const r   = hexToRgb(sp.color);
   const todayStr = today();
-  const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth    = new Date(calYear, calMonth + 1, 0).getDate();
 
-  $('calMonthLabel').textContent = `${MONTHS[calMonth].slice(0,3)} ${calYear}`;
+  $('dateMonth').textContent = MONTHS[now.getMonth()].toUpperCase();
+  $('dateDay').textContent   = now.getDate();
+  $('dateYear').textContent  = now.getFullYear();
 
-  const labelRow = $('calDayLabels');
-  if (!labelRow.children.length) {
-    DAY_ABBR.forEach(d => {
-      const span = el('span', 'cal-day-label');
-      span.textContent = d;
-      labelRow.appendChild(span);
-    });
-  }
+  const dow    = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1));
+  monday.setHours(0, 0, 0, 0);
 
-  const cells = [...Array(firstDayOfWeek).fill(null), ...Array.from({length: daysInMonth}, (_, i) => i + 1)];
-  while (cells.length % 7 !== 0) cells.push(null);
+  const strip = $('weekStrip');
+  strip.innerHTML = '';
 
-  const grid = $('calGrid');
-  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d  = new Date(monday);
+    d.setDate(d.getDate() + i);
+    const ds       = d.toISOString().slice(0, 10);
+    const isToday  = ds === todayStr;
+    const isFuture = ds > todayStr;
+    const ratio    = isFuture || !state.habits.length ? 0
+      : state.habits.filter(h => h.completions.includes(ds)).length / state.habits.length;
 
-  cells.forEach(day => {
-    const cell = el('div', 'cal-cell');
-    if (!day) { grid.appendChild(cell); return; }
+    const item = el('div', 'wday');
+    const lbl  = el('span', 'wday-lbl');
+    lbl.textContent = DAY_SHORT[i];
 
-    const dateStr  = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const isToday  = dateStr === todayStr;
-    const isFuture = dateStr > todayStr;
-    const ratio    = isFuture || !habits.length ? 0
-      : habits.filter(h => h.completions.includes(dateStr)).length / habits.length;
-
-    const dot = el('div', 'cal-dot');
-    if (isToday) {
-      dot.style.background = sp.color;
-    } else if (ratio > 0) {
-      dot.style.background = `rgba(${rgb},${(0.25 + ratio * 0.65).toFixed(2)})`;
+    const dot = el('div', 'wday-dot' + (isToday ? ' is-today' : '') + (isFuture ? ' is-future' : ''));
+    if (!isFuture && ratio > 0) {
+      dot.style.background   = `rgba(${r},${(0.25 + ratio * 0.65).toFixed(2)})`;
+      if (!isToday) dot.style.borderColor = sp.color;
     }
 
-    const num = el('span', 'cal-num');
-    if (isToday)  num.classList.add('today-num');
-    if (isFuture) num.classList.add('future-num');
-    if (!isToday && ratio === 1) num.classList.add('full-num');
-    num.textContent = day;
+    const num = el('span', 'wday-num');
+    num.textContent = d.getDate();
+    if (isToday) num.style.color = sp.color;
 
     dot.appendChild(num);
-    cell.appendChild(dot);
-    grid.appendChild(cell);
-  });
+    item.appendChild(lbl);
+    item.appendChild(dot);
+    strip.appendChild(item);
+  }
 }
 
 function bindHomeEvents() {
@@ -738,15 +724,7 @@ function bindHomeEvents() {
     save(state);
     renderCharacter();
     renderHabits();
-    renderCalendar();
-  });
-  $('prevMonth').addEventListener('click', () => {
-    if (calMonth === 0) { calYear--; calMonth = 11; } else calMonth--;
-    renderCalendar();
-  });
-  $('nextMonth').addEventListener('click', () => {
-    if (calMonth === 11) { calYear++; calMonth = 0; } else calMonth++;
-    renderCalendar();
+    renderDate();
   });
 }
 
@@ -770,7 +748,7 @@ function submitHabit() {
   closeModal();
   renderCharacter();
   renderHabits();
-  renderCalendar();
+  renderDate();
 }
 
 $('cancelAdd').addEventListener('click', closeModal);
