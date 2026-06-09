@@ -96,10 +96,10 @@ function CharacterSection({ character, habits }) {
 }
 
 const c = StyleSheet.create({
-  section: { alignItems: 'center', paddingTop: 12, paddingBottom: 8, height: 148 },
-  center:  { width: 100, height: 100, alignItems: 'center', justifyContent: 'center' },
-  glow:    { position: 'absolute', width: 100, height: 100, borderRadius: 50 },
-  emoji:   { fontSize: 64 },
+  section: { alignItems: 'center', paddingTop: 8, paddingBottom: 8, height: 200 },
+  center:  { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
+  glow:    { position: 'absolute', width: 140, height: 140, borderRadius: 70 },
+  emoji:   { fontSize: 88 },
   name:    { fontSize: 18, fontWeight: '800', letterSpacing: -0.3, marginTop: 6 },
   mood:    { fontSize: 13, color: '#7a7a9a', marginTop: 2 },
 });
@@ -250,73 +250,23 @@ const g = StyleSheet.create({
 // ─── Calendar Section ─────────────────────────────────────────────────────────
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_SHORT   = ['M','T','W','T','F','S','S'];
 
-function DateSection({ habits, speciesColor }) {
-  const now      = new Date();
-  const todayStr = today();
-  const rgb      = hexToRgb(speciesColor);
-
-  const dow    = now.getDay();
-  const monday = new Date(now);
-  monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1));
-  monday.setHours(0, 0, 0, 0);
-
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d  = new Date(monday);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-
+function DateSection({ speciesColor }) {
+  const now = new Date();
   return (
     <View style={ds.container}>
-      <View style={ds.hero}>
-        <Text style={ds.monthLbl}>{MONTH_NAMES[now.getMonth()].toUpperCase()}</Text>
-        <Text style={[ds.dayNum, { color: speciesColor }]}>{now.getDate()}</Text>
-        <Text style={ds.yearLbl}>{now.getFullYear()}</Text>
-      </View>
-
-      <View style={ds.strip}>
-        {weekDays.map((d, i) => {
-          const dateStr  = d.toISOString().slice(0, 10);
-          const isToday  = dateStr === todayStr;
-          const isFuture = dateStr > todayStr;
-          const ratio    = isFuture || !habits.length ? 0
-            : habits.filter(h => h.completions.includes(dateStr)).length / habits.length;
-          const dotBg    = !isFuture && ratio > 0
-            ? `rgba(${rgb},${(0.25 + ratio * 0.65).toFixed(2)})` : 'transparent';
-
-          return (
-            <View key={i} style={ds.wday}>
-              <Text style={ds.wdayLbl}>{DAY_SHORT[i]}</Text>
-              <View style={[
-                ds.dot,
-                { borderColor: isToday ? speciesColor : '#2e2e3e', borderWidth: isToday ? 2 : 1.5,
-                  backgroundColor: dotBg, opacity: isFuture ? 0.25 : 1 },
-              ]}>
-                <Text style={[ds.dotNum, isToday && { color: speciesColor, fontWeight: '800' }]}>
-                  {d.getDate()}
-                </Text>
-              </View>
-            </View>
-          );
-        })}
-      </View>
+      <Text style={ds.monthLbl}>{MONTH_NAMES[now.getMonth()].toUpperCase()}</Text>
+      <Text style={[ds.dayNum, { color: speciesColor }]}>{now.getDate()}</Text>
+      <Text style={ds.yearLbl}>{now.getFullYear()}</Text>
     </View>
   );
 }
 
 const ds = StyleSheet.create({
-  container: { paddingHorizontal: 24, paddingBottom: 14 },
-  hero:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  container: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingTop: 12 },
   monthLbl:  { flex: 1, fontSize: 11, fontWeight: '700', color: '#7a7a9a', letterSpacing: 2 },
   dayNum:    { flex: 1, fontSize: 80, fontWeight: '900', lineHeight: 80, letterSpacing: -3, textAlign: 'center' },
   yearLbl:   { flex: 1, fontSize: 11, fontWeight: '600', color: '#4a4a6a', letterSpacing: 2, textAlign: 'right' },
-  strip:     { flexDirection: 'row' },
-  wday:      { flex: 1, alignItems: 'center', gap: 4 },
-  wdayLbl:   { fontSize: 9, fontWeight: '700', color: '#4a4a6a', letterSpacing: 1 },
-  dot:       { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  dotNum:    { fontSize: 10, fontWeight: '500', color: '#4a4a6a' },
 });
 
 // ─── Bottom Bar (Safari-style) ────────────────────────────────────────────────
@@ -467,6 +417,7 @@ export default function HomeScreen({ data, onSave }) {
     <SafeAreaView style={s.safe}>
       <StatusBar barStyle="light-content" backgroundColor="#0f0f13" />
       <View style={s.container}>
+        <DateSection speciesColor={sp.color} />
         <CharacterSection character={character} habits={habits} />
         <HabitGrid
           habits={habits}
@@ -475,7 +426,6 @@ export default function HomeScreen({ data, onSave }) {
           onMarkAll={markAllDone}
           onLongPress={deleteHabit}
         />
-        <DateSection habits={habits} speciesColor={sp.color} />
         <BottomBar speciesColor={sp.color} onOpen={() => setModalVisible(true)} />
       </View>
       <AddModal

@@ -100,7 +100,7 @@ body {
 /* Character */
 .char-section {
   flex-shrink: 0;
-  height: 148px;
+  height: 200px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -109,8 +109,8 @@ body {
 }
 .char-center {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 130px;
+  height: 130px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +126,7 @@ body {
   0%, 100% { transform: scale(1);    opacity: .8; }
   50%       { transform: scale(1.2); opacity: 1;  }
 }
-.char-emoji { font-size: 64px; position: relative; z-index: 1; line-height: 1; }
+.char-emoji { font-size: 84px; position: relative; z-index: 1; line-height: 1; }
 .char-name  { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
 .char-mood  { font-size: 13px; color: var(--muted); }
 
@@ -245,13 +245,11 @@ body {
 }
 
 /* Date Section */
-.date-section { flex-shrink: 0; padding: 0 24px 14px; }
+.date-section { flex-shrink: 0; padding: 12px 24px 0; }
 .date-hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2px;
-  margin-bottom: 14px;
 }
 .date-month-lbl {
   font-size: 11px;
@@ -278,23 +276,6 @@ body {
   text-align: right;
   flex: 1;
 }
-.week-strip { display: flex; }
-.wday { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-.wday-lbl { font-size: 9px; font-weight: 700; color: var(--dim); letter-spacing: 0.06em; }
-.wday-dot {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .2s, border-color .2s;
-}
-.wday-dot.is-today  { border: 2px solid var(--sp); }
-.wday-dot.is-future { opacity: 0.25; }
-.wday-num { font-size: 10px; font-weight: 500; color: var(--dim); line-height: 1; }
-.wday-dot.is-today .wday-num { color: var(--sp); font-weight: 800; }
 
 /* Bottom Bar */
 .bottom-bar {
@@ -415,6 +396,14 @@ body {
 
 <!-- ── Home ───────────────────────────────────────── -->
 <div id="home" class="screen hidden">
+  <div class="date-section">
+    <div class="date-hero">
+      <span class="date-month-lbl" id="dateMonth"></span>
+      <span class="date-day-num"   id="dateDay"></span>
+      <span class="date-year-lbl"  id="dateYear"></span>
+    </div>
+  </div>
+
   <div class="char-section">
     <div class="char-center">
       <div class="char-glow" id="charGlow"></div>
@@ -430,15 +419,6 @@ body {
       <button id="markAllBtn" class="hidden-btn">Mark all done</button>
     </div>
     <div class="habit-grid" id="habitGrid"></div>
-  </div>
-
-  <div class="date-section">
-    <div class="date-hero">
-      <span class="date-month-lbl" id="dateMonth"></span>
-      <span class="date-day-num"   id="dateDay"></span>
-      <span class="date-year-lbl"  id="dateYear"></span>
-    </div>
-    <div class="week-strip" id="weekStrip"></div>
   </div>
 
   <div class="bottom-bar" id="addBar">
@@ -503,7 +483,6 @@ function load() {
 function save(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
 
 let state = load();
-const DAY_SHORT = ['M','T','W','T','F','S','S'];
 
 // ── Init ──────────────────────────────────────────
 function init() {
@@ -665,50 +644,9 @@ function confirmDelete(id) {
 
 function renderDate() {
   const now = new Date();
-  const sp  = getSpecies();
-  const r   = hexToRgb(sp.color);
-  const todayStr = today();
-
   $('dateMonth').textContent = MONTHS[now.getMonth()].toUpperCase();
   $('dateDay').textContent   = now.getDate();
   $('dateYear').textContent  = now.getFullYear();
-
-  const dow    = now.getDay();
-  const monday = new Date(now);
-  monday.setDate(monday.getDate() - (dow === 0 ? 6 : dow - 1));
-  monday.setHours(0, 0, 0, 0);
-
-  const strip = $('weekStrip');
-  strip.innerHTML = '';
-
-  for (let i = 0; i < 7; i++) {
-    const d  = new Date(monday);
-    d.setDate(d.getDate() + i);
-    const ds       = d.toISOString().slice(0, 10);
-    const isToday  = ds === todayStr;
-    const isFuture = ds > todayStr;
-    const ratio    = isFuture || !state.habits.length ? 0
-      : state.habits.filter(h => h.completions.includes(ds)).length / state.habits.length;
-
-    const item = el('div', 'wday');
-    const lbl  = el('span', 'wday-lbl');
-    lbl.textContent = DAY_SHORT[i];
-
-    const dot = el('div', 'wday-dot' + (isToday ? ' is-today' : '') + (isFuture ? ' is-future' : ''));
-    if (!isFuture && ratio > 0) {
-      dot.style.background   = `rgba(${r},${(0.25 + ratio * 0.65).toFixed(2)})`;
-      if (!isToday) dot.style.borderColor = sp.color;
-    }
-
-    const num = el('span', 'wday-num');
-    num.textContent = d.getDate();
-    if (isToday) num.style.color = sp.color;
-
-    dot.appendChild(num);
-    item.appendChild(lbl);
-    item.appendChild(dot);
-    strip.appendChild(item);
-  }
 }
 
 function bindHomeEvents() {
