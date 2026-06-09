@@ -138,12 +138,13 @@ body {
   flex-direction: column;
   padding: 0 24px;
   overflow: hidden;
+  justify-content: center;
 }
 .habit-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   flex-shrink: 0;
 }
 .habit-header-title { font-size: 16px; font-weight: 700; }
@@ -160,21 +161,19 @@ body {
 #markAllBtn.hidden-btn { visibility: hidden; }
 
 .habit-grid {
-  flex: 1;
-  min-height: 0;
   display: grid;
   gap: 12px;
-  align-content: center;
+  align-content: start;
   justify-content: center;
 }
 .habit-empty {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--dim);
   font-size: 14px;
   text-align: center;
+  padding: 24px 0;
 }
 
 .habit-circle {

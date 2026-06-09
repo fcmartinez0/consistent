@@ -236,13 +236,13 @@ function HabitGrid({ habits, speciesColor, onMarkDone, onMarkAll, onLongPress })
 }
 
 const g = StyleSheet.create({
-  container: { flex: 1, paddingHorizontal: 24 },
-  header:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  container: { flex: 1, paddingHorizontal: 24, justifyContent: 'center' },
+  header:    { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   title:     { fontSize: 16, fontWeight: '700', color: '#e8e8f0' },
   markAll:   { fontSize: 13, fontWeight: '600' },
-  empty:     { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  empty:     { alignItems: 'center', paddingVertical: 24 },
   emptyText: { color: '#4a4a6a', fontSize: 14 },
-  grid:      { flex: 1, justifyContent: 'center', gap: 12 },
+  grid:      { gap: 12 },
   row:       { flexDirection: 'row', gap: 12, justifyContent: 'center' },
   rowCentered: {},
 });
