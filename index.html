@@ -100,17 +100,17 @@ body {
 /* Character */
 .char-section {
   flex-shrink: 0;
-  height: 200px;
+  height: 236px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 3px;
 }
 .char-center {
   position: relative;
-  width: 130px;
-  height: 130px;
+  width: 110px;
+  height: 110px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -126,9 +126,62 @@ body {
   0%, 100% { transform: scale(1);    opacity: .8; }
   50%       { transform: scale(1.2); opacity: 1;  }
 }
-.char-emoji { font-size: 84px; position: relative; z-index: 1; line-height: 1; }
-.char-name  { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
-.char-mood  { font-size: 13px; color: var(--muted); }
+.char-emoji { font-size: 68px; position: relative; z-index: 1; line-height: 1; }
+.char-name  { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+.char-level {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sp);
+  margin-top: 1px;
+}
+@keyframes lvlPop {
+  0%,100% { transform: scale(1); }
+  40%     { transform: scale(1.5); }
+}
+.char-level.lvl-up { animation: lvlPop .45s cubic-bezier(.34,1.56,.64,1); }
+.xp-wrap {
+  width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+}
+.xp-track {
+  width: 100%;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.xp-fill {
+  height: 100%;
+  background: var(--sp);
+  border-radius: 2px;
+  transition: width .6s cubic-bezier(.4,0,.2,1);
+}
+.xp-lbl { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; }
+.char-mood  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+/* XP floater */
+.xp-floater {
+  position: fixed;
+  z-index: 300;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--sp);
+  pointer-events: none;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  display: none;
+}
+@keyframes xpRise {
+  0%   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  100% { transform: translateX(-50%) translateY(-64px); opacity: 0; }
+}
+.xp-floater.rise { animation: xpRise 1s ease-out forwards; }
 
 /* Habits */
 .habit-section {
@@ -138,12 +191,13 @@ body {
   flex-direction: column;
   padding: 0 24px;
   overflow: hidden;
+  justify-content: center;
 }
 .habit-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
   flex-shrink: 0;
 }
 .habit-header-title { font-size: 16px; font-weight: 700; }
@@ -160,21 +214,19 @@ body {
 #markAllBtn.hidden-btn { visibility: hidden; }
 
 .habit-grid {
-  flex: 1;
-  min-height: 0;
   display: grid;
   gap: 12px;
-  align-content: center;
+  align-content: start;
   justify-content: center;
 }
 .habit-empty {
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--dim);
   font-size: 14px;
   text-align: center;
+  padding: 24px 0;
 }
 
 .habit-circle {
@@ -410,6 +462,11 @@ body {
       <span class="char-emoji" id="charEmoji"></span>
     </div>
     <span class="char-name" id="charName"></span>
+    <span class="char-level" id="charLevel">Lv 1 · Wanderer</span>
+    <div class="xp-wrap">
+      <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+      <span class="xp-lbl" id="xpLbl">0 / 100 XP</span>
+    </div>
     <span class="char-mood" id="charMood"></span>
   </div>
 
@@ -443,6 +500,8 @@ body {
   </div>
 </div>
 
+<div id="xpFloater" class="xp-floater"></div>
+
 <script>
 const STORAGE_KEY = 'consistent_v2';
 
@@ -452,6 +511,34 @@ const SPECIES = [
   { id: 'pebble', name: 'Pebble', emoji: '🪨', hint: 'Grounded and strong',  color: '#94a3b8', glow: 'rgba(148,163,184,0.18)' },
   { id: 'wisp',   name: 'Wisp',   emoji: '✨', hint: 'Curious and bright',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)' },
 ];
+
+// ── XP System ──────────────────────────────────────────
+const XP_THRESHOLDS = [0, 100, 275, 550, 1100, 2200];
+const LEVEL_NAMES   = ['Wanderer','Apprentice','Keeper','Guardian','Champion','Legend'];
+const SPECIES_EVO   = {
+  ember:  ['🔥','⚡','🌋','☄️','🌞','✴️'],
+  sprout: ['🌱','🌿','🌳','🌴','🌲','🎋'],
+  pebble: ['🪨','⚫','🔵','💎','💠','🔮'],
+  wisp:   ['✨','💫','⭐','🌟','🌠','🪐'],
+};
+const XP_BASE = 10;
+const XP_STREAK_BONUS = 2;
+const XP_STREAK_CAP   = 20;
+
+function getLevelInfo(xp = 0) {
+  let lvl = 0;
+  while (lvl < XP_THRESHOLDS.length - 1 && xp >= XP_THRESHOLDS[lvl + 1]) lvl++;
+  const isMax     = lvl >= XP_THRESHOLDS.length - 1;
+  const xpStart   = XP_THRESHOLDS[lvl];
+  const xpEnd     = isMax ? null : XP_THRESHOLDS[lvl + 1];
+  const into      = xp - xpStart;
+  const needed    = isMax ? null : xpEnd - xpStart;
+  return { level: lvl + 1, name: LEVEL_NAMES[lvl], into, needed, progress: isMax ? 1 : into / needed, isMax };
+}
+
+function xpForCompletion(streak) {
+  return XP_BASE + Math.min(streak * XP_STREAK_BONUS, XP_STREAK_CAP);
+}
 
 const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_ABBR = ['S','M','T','W','T','F','S'];
@@ -487,7 +574,10 @@ let state = load();
 // ── Init ──────────────────────────────────────────
 function init() {
   if (!state?.character) showOnboarding();
-  else showHome();
+  else {
+    if (!('xp' in state.character)) state.character.xp = 0;
+    showHome();
+  }
 }
 
 // ── Onboarding ────────────────────────────────────
@@ -517,7 +607,7 @@ function showOnboarding() {
 
   $('beginBtn').addEventListener('click', () => {
     if (!selectedId) return;
-    state = { character: { species: selectedId }, habits: [] };
+    state = { character: { species: selectedId, xp: 0 }, habits: [] };
     save(state);
     showHome();
   }, { once: true });
@@ -546,17 +636,24 @@ function getSpecies() {
 
 function renderCharacter() {
   const sp   = getSpecies();
-  const done = state.habits.filter(h => isDone(h.completions)).length;
-  const total = state.habits.length;
-  const mood = total === 0    ? 'Add habits below to begin'
-    : done === total          ? '✨ All done today!'
-    : done > 0                ? `${done} of ${total} done today`
-    :                           'Ready when you are…';
+  const xp   = state.character.xp || 0;
+  const info = getLevelInfo(xp);
+  const evo  = SPECIES_EVO[sp.id] || SPECIES_EVO.wisp;
 
-  $('charEmoji').textContent = sp.emoji;
+  $('charEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
   $('charName').textContent  = sp.name;
   $('charName').style.color  = sp.color;
-  $('charMood').textContent  = mood;
+  $('charLevel').textContent = `Lv ${info.level} · ${info.name}`;
+  $('xpFill').style.width    = (info.progress * 100) + '%';
+  $('xpLbl').textContent     = info.isMax ? `${xp} XP · MAX` : `${info.into} / ${info.needed} XP`;
+
+  const done  = state.habits.filter(h => isDone(h.completions)).length;
+  const total = state.habits.length;
+  const mood  = total === 0   ? 'Add habits to start earning XP'
+    : done === total           ? '✨ All done! XP earned today'
+    : done > 0                 ? `${done} of ${total} done · keep going!`
+    :                            'Ready when you are…';
+  $('charMood').textContent = mood;
 }
 
 function renderHabits() {
@@ -624,12 +721,45 @@ function markHabitDone(id, circleEl) {
   habit.completions.push(today());
   const streak = calcStreak(habit.completions);
   if (streak > (habit.bestStreak || 0)) habit.bestStreak = streak;
+
+  const earned   = xpForCompletion(streak);
+  const oldLevel = getLevelInfo(state.character.xp || 0).level;
+  state.character.xp = (state.character.xp || 0) + earned;
+  const newLevel = getLevelInfo(state.character.xp).level;
+
   save(state);
+
+  const rect = circleEl.getBoundingClientRect();
   circleEl.classList.add('done', 'pop');
   circleEl.addEventListener('animationend', () => circleEl.classList.remove('pop'), { once: true });
+
+  showXpFloat(rect.left + rect.width / 2, rect.top + 10, earned, streak > 1);
+
+  if (newLevel > oldLevel) flashLevelUp();
+
   renderCharacter();
   renderHabits();
   renderDate();
+}
+
+function showXpFloat(x, y, xp, streakBonus) {
+  const el = $('xpFloater');
+  el.textContent = streakBonus ? `+${xp} XP 🔥` : `+${xp} XP`;
+  el.style.left  = x + 'px';
+  el.style.top   = y + 'px';
+  el.style.display = 'block';
+  el.classList.remove('rise');
+  void el.offsetWidth;
+  el.classList.add('rise');
+  setTimeout(() => { el.style.display = 'none'; }, 1050);
+}
+
+function flashLevelUp() {
+  const el = $('charLevel');
+  el.classList.remove('lvl-up');
+  void el.offsetWidth;
+  el.classList.add('lvl-up');
+  el.addEventListener('animationend', () => el.classList.remove('lvl-up'), { once: true });
 }
 
 function confirmDelete(id) {
@@ -653,12 +783,16 @@ function bindHomeEvents() {
   $('addBar').addEventListener('click', openModal);
   $('markAllBtn').addEventListener('click', () => {
     const t = today();
+    const oldLevel = getLevelInfo(state.character.xp || 0).level;
     state.habits.forEach(h => {
       if (isDone(h.completions)) return;
       h.completions.push(t);
       const s = calcStreak(h.completions);
       if (s > (h.bestStreak||0)) h.bestStreak = s;
+      state.character.xp = (state.character.xp || 0) + xpForCompletion(s);
     });
+    const newLevel = getLevelInfo(state.character.xp).level;
+    if (newLevel > oldLevel) flashLevelUp();
     save(state);
     renderCharacter();
     renderHabits();
