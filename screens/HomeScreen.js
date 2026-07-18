@@ -16,11 +16,38 @@ import {
 } from 'react-native';
 
 const SPECIES_CONFIG = {
-  ember:  { emoji: '🔥', name: 'Ember',  color: '#f97316', glow: 'rgba(249,115,22,0.18)' },
-  sprout: { emoji: '🌱', name: 'Sprout', color: '#22c55e', glow: 'rgba(34,197,94,0.18)'  },
-  pebble: { emoji: '🪨', name: 'Pebble', color: '#94a3b8', glow: 'rgba(148,163,184,0.18)'},
-  wisp:   { emoji: '✨', name: 'Wisp',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)'},
+  ember:  { name: 'Ember',  color: '#f97316', glow: 'rgba(249,115,22,0.18)' },
+  sprout: { name: 'Sprout', color: '#22c55e', glow: 'rgba(34,197,94,0.18)'  },
+  pebble: { name: 'Pebble', color: '#94a3b8', glow: 'rgba(148,163,184,0.18)'},
+  wisp:   { name: 'Wisp',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)'},
 };
+
+const SPECIES_EVO = {
+  ember:  ['🔥','⚡','🌋','☄️','🌞','✴️'],
+  sprout: ['🌱','🌿','🌳','🌴','🌲','🎋'],
+  pebble: ['🪨','⚫','🔵','💎','💠','🔮'],
+  wisp:   ['✨','💫','⭐','🌟','🌠','🪐'],
+};
+
+const XP_THRESHOLDS = [0, 100, 275, 550, 1100, 2200];
+const LEVEL_NAMES   = ['Wanderer','Apprentice','Keeper','Guardian','Champion','Legend'];
+const XP_BASE = 10;
+const XP_STREAK_BONUS = 2;
+const XP_STREAK_CAP   = 20;
+
+function getLevelInfo(xp = 0) {
+  let lvl = 0;
+  while (lvl < XP_THRESHOLDS.length - 1 && xp >= XP_THRESHOLDS[lvl + 1]) lvl++;
+  const isMax   = lvl >= XP_THRESHOLDS.length - 1;
+  const xpStart = XP_THRESHOLDS[lvl];
+  const into    = xp - xpStart;
+  const needed  = isMax ? null : XP_THRESHOLDS[lvl + 1] - xpStart;
+  return { level: lvl + 1, name: LEVEL_NAMES[lvl], into, needed, progress: isMax ? 1 : into / needed, isMax };
+}
+
+function xpForCompletion(streak) {
+  return XP_BASE + Math.min(streak * XP_STREAK_BONUS, XP_STREAK_CAP);
+}
 
 function today() { return new Date().toISOString().slice(0, 10); }
 function isDoneToday(completions) { return completions.includes(today()); }
@@ -63,45 +90,82 @@ function getGridLayout(count, containerW, containerH) {
 
 // ─── Character Section ────────────────────────────────────────────────────────
 
-function CharacterSection({ character, habits }) {
-  const sp = SPECIES_CONFIG[character.species] || SPECIES_CONFIG.wisp;
-  const pulse = useRef(new Animated.Value(1)).current;
+function CharacterSection({ character, habits, xpFlash }) {
+  const sp   = SPECIES_CONFIG[character.species] || SPECIES_CONFIG.wisp;
+  const xp   = character.xp || 0;
+  const info = getLevelInfo(xp);
+  const evo  = SPECIES_EVO[character.species] || SPECIES_EVO.wisp;
+  const emoji = evo[Math.min(info.level - 1, evo.length - 1)];
+
+  const pulse  = useRef(new Animated.Value(1)).current;
+  const xpAnim = useRef(new Animated.Value(info.progress)).current;
+  const lvlScale = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.2, duration: 2200, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1,   duration: 2200, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1.18, duration: 2200, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1,    duration: 2200, useNativeDriver: true }),
       ])
     ).start();
   }, []);
 
+  useEffect(() => {
+    Animated.timing(xpAnim, { toValue: info.progress, duration: 600, useNativeDriver: false }).start();
+  }, [xp]);
+
+  useEffect(() => {
+    if (!xpFlash) return;
+    Animated.sequence([
+      Animated.spring(lvlScale, { toValue: 1.5, friction: 4, useNativeDriver: true }),
+      Animated.timing(lvlScale, { toValue: 1, duration: 200, useNativeDriver: true }),
+    ]).start();
+  }, [xpFlash]);
+
   const done  = habits.filter(h => isDoneToday(h.completions)).length;
   const total = habits.length;
-  const mood  = total === 0       ? 'Add habits below to begin'
-              : done === total    ? '✨ All done today!'
-              : done > 0          ? `${done} of ${total} done today`
-              :                     'Ready when you are…';
+  const mood  = total === 0    ? 'Add habits to start earning XP'
+              : done === total ? '✨ All done! XP earned today'
+              : done > 0       ? `${done} of ${total} done · keep going!`
+              :                  'Ready when you are…';
+
+  const xpWidth = xpAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
   return (
     <View style={c.section}>
       <View style={c.center}>
         <Animated.View style={[c.glow, { backgroundColor: sp.glow, transform: [{ scale: pulse }] }]} />
-        <Text style={c.emoji}>{sp.emoji}</Text>
+        <Text style={c.emoji}>{emoji}</Text>
       </View>
       <Text style={[c.name, { color: sp.color }]}>{sp.name}</Text>
+      <Animated.Text style={[c.level, { color: sp.color, transform: [{ scale: lvlScale }] }]}>
+        {`LV ${info.level}  ·  ${info.name.toUpperCase()}`}
+      </Animated.Text>
+      <View style={c.xpWrap}>
+        <View style={c.xpTrack}>
+          <Animated.View style={[c.xpFill, { width: xpWidth, backgroundColor: sp.color }]} />
+        </View>
+        <Text style={c.xpLbl}>
+          {info.isMax ? `${xp} XP · MAX` : `${info.into} / ${info.needed} XP`}
+        </Text>
+      </View>
       <Text style={c.mood}>{mood}</Text>
     </View>
   );
 }
 
 const c = StyleSheet.create({
-  section: { alignItems: 'center', paddingTop: 8, paddingBottom: 8, height: 200 },
-  center:  { width: 140, height: 140, alignItems: 'center', justifyContent: 'center' },
-  glow:    { position: 'absolute', width: 140, height: 140, borderRadius: 70 },
-  emoji:   { fontSize: 88 },
-  name:    { fontSize: 18, fontWeight: '800', letterSpacing: -0.3, marginTop: 6 },
-  mood:    { fontSize: 13, color: '#7a7a9a', marginTop: 2 },
+  section: { alignItems: 'center', paddingTop: 4, paddingBottom: 4, height: 236 },
+  center:  { width: 110, height: 110, alignItems: 'center', justifyContent: 'center' },
+  glow:    { position: 'absolute', width: 110, height: 110, borderRadius: 55 },
+  emoji:   { fontSize: 68 },
+  name:    { fontSize: 17, fontWeight: '800', letterSpacing: -0.3, marginTop: 4 },
+  level:   { fontSize: 10, fontWeight: '700', letterSpacing: 1.4, marginTop: 2 },
+  xpWrap:  { width: 150, marginTop: 6, alignItems: 'center', gap: 3 },
+  xpTrack: { width: '100%', height: 3, backgroundColor: '#2e2e3e', borderRadius: 2, overflow: 'hidden' },
+  xpFill:  { height: '100%', borderRadius: 2 },
+  xpLbl:   { fontSize: 10, color: '#7a7a9a', fontWeight: '600', letterSpacing: 0.4 },
+  mood:    { fontSize: 12, color: '#7a7a9a', marginTop: 4 },
 });
 
 // ─── Habit Circle ─────────────────────────────────────────────────────────────
@@ -368,6 +432,16 @@ export default function HomeScreen({ data, onSave }) {
   const { character, habits } = data;
   const sp = SPECIES_CONFIG[character.species] || SPECIES_CONFIG.wisp;
   const [modalVisible, setModalVisible] = useState(false);
+  const [xpFlash, setXpFlash] = useState(0);
+
+  function awardXp(streak) {
+    const earned   = xpForCompletion(streak);
+    const oldLevel = getLevelInfo(character.xp || 0).level;
+    const newXp    = (character.xp || 0) + earned;
+    const newLevel = getLevelInfo(newXp).level;
+    if (newLevel > oldLevel) setXpFlash(f => f + 1);
+    return newXp;
+  }
 
   function addHabit(name) {
     onSave({
@@ -381,28 +455,30 @@ export default function HomeScreen({ data, onSave }) {
   }
 
   function markDone(id) {
-    onSave({
-      ...data,
-      habits: habits.map(h => {
-        if (h.id !== id) return h;
-        const completions = [...h.completions, today()];
-        const streak = calcStreak(completions);
-        return { ...h, completions, bestStreak: Math.max(h.bestStreak || 0, streak) };
-      }),
+    let newXp = character.xp || 0;
+    const newHabits = habits.map(h => {
+      if (h.id !== id) return h;
+      const completions = [...h.completions, today()];
+      const streak = calcStreak(completions);
+      newXp = awardXp(streak);
+      return { ...h, completions, bestStreak: Math.max(h.bestStreak || 0, streak) };
     });
+    onSave({ ...data, character: { ...character, xp: newXp }, habits: newHabits });
   }
 
   function markAllDone() {
     const t = today();
-    onSave({
-      ...data,
-      habits: habits.map(h => {
-        if (isDoneToday(h.completions)) return h;
-        const completions = [...h.completions, t];
-        const streak = calcStreak(completions);
-        return { ...h, completions, bestStreak: Math.max(h.bestStreak || 0, streak) };
-      }),
+    let newXp = character.xp || 0;
+    const newHabits = habits.map(h => {
+      if (isDoneToday(h.completions)) return h;
+      const completions = [...h.completions, t];
+      const streak = calcStreak(completions);
+      newXp += xpForCompletion(streak);
+      return { ...h, completions, bestStreak: Math.max(h.bestStreak || 0, streak) };
     });
+    const oldLevel = getLevelInfo(character.xp || 0).level;
+    if (getLevelInfo(newXp).level > oldLevel) setXpFlash(f => f + 1);
+    onSave({ ...data, character: { ...character, xp: newXp }, habits: newHabits });
   }
 
   function deleteHabit(id) {
@@ -418,7 +494,7 @@ export default function HomeScreen({ data, onSave }) {
       <StatusBar barStyle="light-content" backgroundColor="#0f0f13" />
       <View style={s.container}>
         <DateSection speciesColor={sp.color} />
-        <CharacterSection character={character} habits={habits} />
+        <CharacterSection character={character} habits={habits} xpFlash={xpFlash} />
         <HabitGrid
           habits={habits}
           speciesColor={sp.color}

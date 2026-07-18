@@ -86,7 +86,7 @@ export default function OnboardingScreen({ onComplete }) {
             !selected && styles.beginBtnDisabled,
           ]}
           disabled={!selected}
-          onPress={() => onComplete({ species: selected })}
+          onPress={() => onComplete({ species: selected, xp: 0 })}
         >
           <Text style={styles.beginBtnText}>
             {selected ? `Begin with ${species.name}` : 'Pick a companion'}
