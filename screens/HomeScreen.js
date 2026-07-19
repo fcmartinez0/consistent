@@ -124,10 +124,12 @@ function CharacterSection({ character, habits, xpFlash }) {
 
   const done  = habits.filter(h => isDoneToday(h.completions)).length;
   const total = habits.length;
-  const mood  = total === 0    ? 'Add habits to start earning XP'
-              : done === total ? '✨ All done! XP earned today'
-              : done > 0       ? `${done} of ${total} done · keep going!`
-              :                  'Ready when you are…';
+  const xpToNext = info.isMax ? 0 : info.needed - info.into;
+  const mood  = total === 0              ? 'Add habits to start earning XP'
+              : done === total           ? 'All done for today'
+              : done > 0                 ? `${done} of ${total} done`
+              : !info.isMax && xpToNext <= 60 ? `${xpToNext} XP to level up`
+              :                            'Ready when you are';
 
   const xpWidth = xpAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] });
 
@@ -139,7 +141,7 @@ function CharacterSection({ character, habits, xpFlash }) {
       </View>
       <Text style={[c.name, { color: sp.color }]}>{sp.name}</Text>
       <Animated.Text style={[c.level, { color: sp.color, transform: [{ scale: lvlScale }] }]}>
-        {`LV ${info.level}  ·  ${info.name.toUpperCase()}`}
+        {`LV ${info.level}  ${info.name.toUpperCase()}`}
       </Animated.Text>
       <View style={c.xpWrap}>
         <View style={c.xpTrack}>
@@ -209,7 +211,7 @@ function HabitCircle({ habit, size, speciesColor, onPress, onLongPress }) {
           { borderRadius: size / 2, backgroundColor: speciesColor, opacity: fill },
         ]} />
         {streak > 0 && (
-          <Text style={[h.streak, { fontSize: streakSize }]}>🔥{streak}</Text>
+          <Text style={[h.streak, { fontSize: streakSize }]}>{streak}d streak</Text>
         )}
         <Text
           style={[h.name, { fontSize, color: done ? '#fff' : '#9a9ab0' }]}
@@ -242,6 +244,10 @@ function HabitGrid({ habits, speciesColor, onMarkDone, onMarkAll, onLongPress })
   const allDone     = habits.length > 0 && habits.every(h => isDoneToday(h.completions));
   const displayHabits = habits.slice(0, layout.displayCount);
 
+  const todayXp = habits
+    .filter(h => isDoneToday(h.completions))
+    .reduce((s, h) => s + xpForCompletion(calcStreak(h.completions)), 0);
+
   const rows = [];
   for (let r = 0; r < Math.ceil(displayHabits.length / layout.cols); r++) {
     rows.push(displayHabits.slice(r * layout.cols, (r + 1) * layout.cols));
@@ -255,7 +261,7 @@ function HabitGrid({ habits, speciesColor, onMarkDone, onMarkAll, onLongPress })
   return (
     <View style={g.container} onLayout={e => setHeight(e.nativeEvent.layout.height)}>
       <View style={g.header}>
-        <Text style={g.title}>Today</Text>
+        <Text style={g.title}>{todayXp > 0 ? `Today  +${todayXp} XP` : 'Today'}</Text>
         {!allDone && habits.length > 1 && (
           <Pressable onPress={onMarkAll} hitSlop={8}>
             <Text style={[g.markAll, { color: speciesColor }]}>Mark all done</Text>
@@ -358,6 +364,52 @@ const bar = StyleSheet.create({
   pillText:    { color: '#fff', fontSize: 22, fontWeight: '300', lineHeight: 28 },
 });
 
+// ─── Level-Up Modal ───────────────────────────────────────────────────────────
+
+function LevelUpModal({ visible, character, onDismiss }) {
+  const sp   = SPECIES_CONFIG[character.species] || SPECIES_CONFIG.wisp;
+  const xp   = character.xp || 0;
+  const info = getLevelInfo(xp);
+  const evo  = SPECIES_EVO[character.species] || SPECIES_EVO.wisp;
+  const emoji = evo[Math.min(info.level - 1, evo.length - 1)];
+  const scale = useRef(new Animated.Value(0.2)).current;
+  const fade  = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!visible) return;
+    scale.setValue(0.2);
+    fade.setValue(0);
+    Animated.parallel([
+      Animated.spring(scale, { toValue: 1, friction: 5, tension: 160, useNativeDriver: true }),
+      Animated.timing(fade,  { toValue: 1, duration: 300, useNativeDriver: true }),
+    ]).start();
+  }, [visible]);
+
+  return (
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onDismiss}>
+      <Pressable style={lv.overlay} onPress={onDismiss}>
+        <Animated.View style={[lv.inner, { opacity: fade }]}>
+          <Animated.Text style={[lv.emoji, { transform: [{ scale }] }]}>{emoji}</Animated.Text>
+          <Text style={[lv.tag, { color: sp.color }]}>LEVEL UP</Text>
+          <Text style={lv.num}>Lv {info.level}</Text>
+          <Text style={[lv.name, { color: sp.color }]}>{info.name}</Text>
+          <Text style={lv.tap}>Tap anywhere to continue</Text>
+        </Animated.View>
+      </Pressable>
+    </Modal>
+  );
+}
+
+const lv = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(10,10,15,0.93)', alignItems: 'center', justifyContent: 'center' },
+  inner:   { alignItems: 'center', gap: 6 },
+  emoji:   { fontSize: 96, lineHeight: 110 },
+  tag:     { fontSize: 11, fontWeight: '800', letterSpacing: 5, marginTop: 16 },
+  num:     { fontSize: 68, fontWeight: '900', color: '#e8e8f0', letterSpacing: -3, lineHeight: 74 },
+  name:    { fontSize: 24, fontWeight: '700', marginTop: 2 },
+  tap:     { fontSize: 12, color: '#4a4a6a', marginTop: 32, letterSpacing: 0.8 },
+});
+
 // ─── Add Modal ────────────────────────────────────────────────────────────────
 
 function AddModal({ visible, speciesColor, onAdd, onClose }) {
@@ -389,7 +441,7 @@ function AddModal({ visible, speciesColor, onAdd, onClose }) {
             style={mod.input}
             value={input}
             onChangeText={setInput}
-            placeholder="e.g. Drink water, Read 10 pages…"
+            placeholder="e.g. Drink water, Read 10 pages"
             placeholderTextColor="#4a4a6a"
             autoFocus
             returnKeyType="done"
@@ -432,6 +484,7 @@ export default function HomeScreen({ data, onSave }) {
   const { character, habits } = data;
   const sp = SPECIES_CONFIG[character.species] || SPECIES_CONFIG.wisp;
   const [modalVisible, setModalVisible] = useState(false);
+  const [lvlUpVisible, setLvlUpVisible] = useState(false);
   const [xpFlash, setXpFlash] = useState(0);
 
   function awardXp(streak) {
@@ -439,7 +492,7 @@ export default function HomeScreen({ data, onSave }) {
     const oldLevel = getLevelInfo(character.xp || 0).level;
     const newXp    = (character.xp || 0) + earned;
     const newLevel = getLevelInfo(newXp).level;
-    if (newLevel > oldLevel) setXpFlash(f => f + 1);
+    if (newLevel > oldLevel) { setXpFlash(f => f + 1); setLvlUpVisible(true); }
     return newXp;
   }
 
@@ -509,6 +562,11 @@ export default function HomeScreen({ data, onSave }) {
         speciesColor={sp.color}
         onAdd={addHabit}
         onClose={() => setModalVisible(false)}
+      />
+      <LevelUpModal
+        visible={lvlUpVisible}
+        character={character}
+        onDismiss={() => setLvlUpVisible(false)}
       />
     </SafeAreaView>
   );

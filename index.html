@@ -183,6 +183,55 @@ body {
 }
 .xp-floater.rise { animation: xpRise 1s ease-out forwards; }
 
+/* Evolution teaser next to XP bar */
+.xp-track-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+.xp-next { font-size: 13px; opacity: 0.28; line-height: 1; flex-shrink: 0; }
+
+/* XP preview on uncompleted circles */
+.circle-xp-hint {
+  position: relative;
+  z-index: 1;
+  color: var(--dim);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Level-up celebration overlay */
+.lvlup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(10,10,15,0.93);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.lvlup-overlay.hidden { display: none !important; }
+.lvlup-overlay:not(.hidden) { animation: lvlFadeIn .3s ease both; }
+@keyframes lvlFadeIn { from { opacity: 0; } to { opacity: 1; } }
+.lvlup-emoji {
+  font-size: 96px;
+  line-height: 1;
+  animation: emojiBounce .55s cubic-bezier(.34,1.56,.64,1) .12s both;
+}
+@keyframes emojiBounce {
+  from { transform: scale(0.15); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+.lvlup-tag  { font-size: 11px; font-weight: 800; letter-spacing: 0.32em; color: var(--sp); margin-top: 20px; }
+.lvlup-num  { font-size: 68px; font-weight: 900; color: var(--text); letter-spacing: -3px; line-height: 1.05; }
+.lvlup-name { font-size: 24px; font-weight: 700; color: var(--sp); margin-top: 2px; }
+.lvlup-tap  { font-size: 12px; color: var(--dim); margin-top: 32px; letter-spacing: 0.05em; }
+
+/* Confetti */
+@keyframes confettiFall {
+  0%   { transform: translateY(0)     rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(500px) rotate(600deg); opacity: 0; }
+}
+
 /* Habits */
 .habit-section {
   flex: 1;
@@ -462,9 +511,12 @@ body {
       <span class="char-emoji" id="charEmoji"></span>
     </div>
     <span class="char-name" id="charName"></span>
-    <span class="char-level" id="charLevel">Lv 1 · Wanderer</span>
+    <span class="char-level" id="charLevel">Lv 1  Wanderer</span>
     <div class="xp-wrap">
-      <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+      <div class="xp-track-row">
+        <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+        <span class="xp-next" id="xpNext"></span>
+      </div>
       <span class="xp-lbl" id="xpLbl">0 / 100 XP</span>
     </div>
     <span class="char-mood" id="charMood"></span>
@@ -472,7 +524,7 @@ body {
 
   <div class="habit-section">
     <div class="habit-header">
-      <span class="habit-header-title">Today</span>
+      <span class="habit-header-title" id="habitHeaderTitle">Today</span>
       <button id="markAllBtn" class="hidden-btn">Mark all done</button>
     </div>
     <div class="habit-grid" id="habitGrid"></div>
@@ -480,7 +532,7 @@ body {
 
   <div class="bottom-bar" id="addBar">
     <div class="bottom-bar-inner">
-      <span class="bottom-bar-placeholder">Add a habit…</span>
+      <span class="bottom-bar-placeholder">Add a habit</span>
       <div class="bottom-bar-pill" id="addPill">+</div>
     </div>
   </div>
@@ -492,12 +544,20 @@ body {
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <p class="modal-title">New habit</p>
-    <input class="modal-input" id="habitInput" type="text" placeholder="e.g. Drink water, Read 10 pages…" maxlength="60" autocomplete="off" />
+    <input class="modal-input" id="habitInput" type="text" placeholder="e.g. Drink water, Read 10 pages" maxlength="60" autocomplete="off" />
     <div class="modal-actions">
       <button class="modal-cancel" id="cancelAdd">Cancel</button>
       <button class="modal-add" id="confirmAdd">Add habit</button>
     </div>
   </div>
+</div>
+
+<div id="lvlUpOverlay" class="lvlup-overlay hidden">
+  <span class="lvlup-emoji" id="lvlUpEmoji"></span>
+  <p class="lvlup-tag">LEVEL UP</p>
+  <p class="lvlup-num" id="lvlUpNum">Lv 2</p>
+  <p class="lvlup-name" id="lvlUpName">Apprentice</p>
+  <p class="lvlup-tap">Tap anywhere to continue</p>
 </div>
 
 <div id="xpFloater" class="xp-floater"></div>
@@ -643,16 +703,21 @@ function renderCharacter() {
   $('charEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
   $('charName').textContent  = sp.name;
   $('charName').style.color  = sp.color;
-  $('charLevel').textContent = `Lv ${info.level} · ${info.name}`;
+  $('charLevel').textContent = `Lv ${info.level}  ${info.name}`;
   $('xpFill').style.width    = (info.progress * 100) + '%';
-  $('xpLbl').textContent     = info.isMax ? `${xp} XP · MAX` : `${info.into} / ${info.needed} XP`;
+  $('xpLbl').textContent     = info.isMax ? `${xp} XP  MAX` : `${info.into} / ${info.needed} XP`;
+
+  const nextEvo = info.isMax ? '' : evo[Math.min(info.level, evo.length - 1)];
+  $('xpNext').textContent = nextEvo;
 
   const done  = state.habits.filter(h => isDone(h.completions)).length;
   const total = state.habits.length;
-  const mood  = total === 0   ? 'Add habits to start earning XP'
-    : done === total           ? '✨ All done! XP earned today'
-    : done > 0                 ? `${done} of ${total} done · keep going!`
-    :                            'Ready when you are…';
+  const xpToNext = info.isMax ? 0 : info.needed - info.into;
+  const mood = total === 0        ? 'Add habits to start earning XP'
+    : done === total              ? 'All done for today'
+    : done > 0                    ? `${done} of ${total} done`
+    : !info.isMax && xpToNext <= 60 ? `${xpToNext} XP to level up`
+    :                                  'Ready when you are';
   $('charMood').textContent = mood;
 }
 
@@ -678,6 +743,11 @@ function renderHabits() {
   grid.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
   grid.innerHTML = '';
 
+  const todayXp = habits
+    .filter(h => isDone(h.completions))
+    .reduce((s, h) => s + xpForCompletion(calcStreak(h.completions)), 0);
+  $('habitHeaderTitle').textContent = todayXp > 0 ? `Today  +${todayXp} XP` : 'Today';
+
   habits.slice(0, MAX).forEach(habit => {
     const done   = isDone(habit.completions);
     const streak = calcStreak(habit.completions);
@@ -685,10 +755,14 @@ function renderHabits() {
     circle.style.width  = size + 'px';
     circle.style.height = size + 'px';
     const fs = Math.max(10, Math.floor(size * 0.13));
+    const ssz = Math.max(8, Math.floor(size * 0.09));
 
-    circle.innerHTML = (streak > 0 ? `<span class="circle-streak" style="font-size:${Math.max(8,Math.floor(size*.09))}px">🔥${streak}</span>` : '')
-      + `<span class="circle-name" style="font-size:${fs}px">${escHtml(habit.name)}</span>`
-      + (done ? `<span class="circle-check" style="font-size:${Math.floor(size*.18)}px">✓</span>` : '');
+    let inner = '';
+    if (streak > 0)  inner += `<span class="circle-streak" style="font-size:${ssz}px">${streak} day streak</span>`;
+    inner += `<span class="circle-name" style="font-size:${fs}px">${escHtml(habit.name)}</span>`;
+    if (done)        inner += `<span class="circle-check" style="font-size:${Math.floor(size*.18)}px">done</span>`;
+    else if (size > 90) inner += `<span class="circle-xp-hint" style="font-size:${ssz}px">+${xpForCompletion(streak + 1)} XP</span>`;
+    circle.innerHTML = inner;
 
     circle.addEventListener('click', () => markHabitDone(habit.id, circle));
     circle.addEventListener('contextmenu', e => { e.preventDefault(); confirmDelete(habit.id); });
@@ -733,18 +807,21 @@ function markHabitDone(id, circleEl) {
   circleEl.classList.add('done', 'pop');
   circleEl.addEventListener('animationend', () => circleEl.classList.remove('pop'), { once: true });
 
-  showXpFloat(rect.left + rect.width / 2, rect.top + 10, earned, streak > 1);
+  const nowAllDone = state.habits.length > 0 && state.habits.every(h => isDone(h.completions));
 
-  if (newLevel > oldLevel) flashLevelUp();
+  showXpFloat(rect.left + rect.width / 2, rect.top + 10, earned);
+
+  if (newLevel > oldLevel) showLevelUp();
+  else if (nowAllDone) burstConfetti();
 
   renderCharacter();
   renderHabits();
   renderDate();
 }
 
-function showXpFloat(x, y, xp, streakBonus) {
+function showXpFloat(x, y, xp) {
   const el = $('xpFloater');
-  el.textContent = streakBonus ? `+${xp} XP 🔥` : `+${xp} XP`;
+  el.textContent = `+${xp} XP`;
   el.style.left  = x + 'px';
   el.style.top   = y + 'px';
   el.style.display = 'block';
@@ -754,12 +831,39 @@ function showXpFloat(x, y, xp, streakBonus) {
   setTimeout(() => { el.style.display = 'none'; }, 1050);
 }
 
-function flashLevelUp() {
-  const el = $('charLevel');
-  el.classList.remove('lvl-up');
-  void el.offsetWidth;
-  el.classList.add('lvl-up');
-  el.addEventListener('animationend', () => el.classList.remove('lvl-up'), { once: true });
+function showLevelUp() {
+  const sp   = getSpecies();
+  const info = getLevelInfo(state.character.xp);
+  const evo  = SPECIES_EVO[sp.id] || SPECIES_EVO.wisp;
+  $('lvlUpEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
+  $('lvlUpNum').textContent   = `Lv ${info.level}`;
+  $('lvlUpName').textContent  = info.name;
+  const overlay = $('lvlUpOverlay');
+  overlay.classList.remove('hidden');
+  overlay.onclick = () => {
+    overlay.classList.add('hidden');
+    burstConfetti();
+  };
+}
+
+function burstConfetti() {
+  const sp = getSpecies();
+  const colors = [sp.color, '#f97316', '#22c55e', '#a78bfa', '#e8e8f0', '#f59e0b', '#ec4899'];
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement('div');
+    const size = 5 + Math.random() * 7;
+    p.style.cssText = [
+      'position:fixed', 'z-index:250', 'pointer-events:none',
+      `width:${size}px`, `height:${size}px`,
+      `border-radius:${Math.random() > 0.4 ? '50%' : '2px'}`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `left:${5 + Math.random() * 90}%`,
+      `top:-8px`,
+      `animation:confettiFall ${0.75 + Math.random() * 0.9}s ease-out ${Math.random() * 0.35}s forwards`,
+    ].join(';');
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2000);
+  }
 }
 
 function confirmDelete(id) {
