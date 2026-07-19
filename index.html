@@ -569,7 +569,7 @@ const SPECIES = [
   { id: 'ember',  name: 'Ember',  emoji: '🔥', hint: 'A fiery trailblazer', color: '#f97316', glow: 'rgba(249,115,22,0.18)'  },
   { id: 'sprout', name: 'Sprout', emoji: '🌱', hint: 'Patient and steady',   color: '#22c55e', glow: 'rgba(34,197,94,0.18)'   },
   { id: 'pebble', name: 'Pebble', emoji: '🪨', hint: 'Grounded and strong',  color: '#94a3b8', glow: 'rgba(148,163,184,0.18)' },
-  { id: 'wisp',   name: 'Wisp',   emoji: '✨', hint: 'Curious and bright',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)' },
+  { id: 'wisp',   name: 'Wisp',   emoji: '✨',        hint: 'Curious and bright',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)' },
 ];
 
 // ── XP System ──────────────────────────────────────────────────────
@@ -577,7 +577,7 @@ const XP_THRESHOLDS = [0, 100, 275, 550, 1100, 2200];
 const LEVEL_NAMES   = ['Wanderer','Apprentice','Keeper','Guardian','Champion','Legend'];
 const SPECIES_EVO   = {
   ember:  ['🔥','⚡','🌋','☄️','🌞','✴️'],
-  sprout: ['🌱','🌿','🌳','🌴','🌲','�DEF'],
+  sprout: ['🌱','🌿','🌳','🌴','🌲','🎋'],
   pebble: ['🪨','⚫','🔵','💎','💠','🔮'],
   wisp:   ['✨','💫','⭐','🌟','🌠','🪐'],
 };
@@ -585,7 +585,8 @@ const XP_BASE = 10;
 const XP_STREAK_BONUS = 2;
 const XP_STREAK_CAP   = 20;
 
-function getLevelInfo(xp = 0) {
+function getLevelInfo(xp) {
+  xp = xp || 0;
   let lvl = 0;
   while (lvl < XP_THRESHOLDS.length - 1 && xp >= XP_THRESHOLDS[lvl + 1]) lvl++;
   const isMax     = lvl >= XP_THRESHOLDS.length - 1;
@@ -600,8 +601,7 @@ function xpForCompletion(streak) {
   return XP_BASE + Math.min(streak * XP_STREAK_BONUS, XP_STREAK_CAP);
 }
 
-const MONTHS   = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAY_ABBR = ['S','M','T','W','T','F','S'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 // ── Data ──────────────────────────────────
 function today() { return new Date().toISOString().slice(0, 10); }
@@ -633,7 +633,7 @@ let state = load();
 
 // ── Init ──────────────────────────────────
 function init() {
-  if (!state?.character) showOnboarding();
+  if (!state || !state.character) showOnboarding();
   else {
     if (!('xp' in state.character)) state.character.xp = 0;
     showHome();
@@ -647,17 +647,17 @@ function showOnboarding() {
   grid.innerHTML = '';
   let selectedId = null;
 
-  SPECIES.forEach(sp => {
+  SPECIES.forEach(function(sp) {
     const card = el('div', 'species-card');
-    card.innerHTML = `<span class="species-emoji">${sp.emoji}</span>
-      <span class="species-name">${sp.name}</span>
-      <span class="species-hint">${sp.hint}</span>`;
-    card.addEventListener('click', () => {
-      document.querySelectorAll('.species-card').forEach(c => c.classList.remove('selected'));
+    card.innerHTML = '<span class="species-emoji">' + sp.emoji + '</span>' +
+      '<span class="species-name">' + sp.name + '</span>' +
+      '<span class="species-hint">' + sp.hint + '</span>';
+    card.addEventListener('click', function() {
+      document.querySelectorAll('.species-card').forEach(function(c) { c.classList.remove('selected'); });
       card.classList.add('selected');
       selectedId = sp.id;
       const btn = $('beginBtn');
-      btn.textContent = `Begin with ${sp.name}`;
+      btn.textContent = 'Begin with ' + sp.name;
       btn.style.background = sp.color;
       btn.style.color = '#fff';
       btn.disabled = false;
@@ -665,7 +665,7 @@ function showOnboarding() {
     grid.appendChild(card);
   });
 
-  $('beginBtn').addEventListener('click', () => {
+  $('beginBtn').addEventListener('click', function() {
     if (!selectedId) return;
     state = { character: { species: selectedId, xp: 0 }, habits: [] };
     save(state);
@@ -691,7 +691,7 @@ function applySpeciesTheme() {
 }
 
 function getSpecies() {
-  return SPECIES.find(s => s.id === state.character.species) || SPECIES[3];
+  return SPECIES.find(function(s) { return s.id === state.character.species; }) || SPECIES[3];
 }
 
 function renderCharacter() {
@@ -703,21 +703,22 @@ function renderCharacter() {
   $('charEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
   $('charName').textContent  = sp.name;
   $('charName').style.color  = sp.color;
-  $('charLevel').textContent = `Lv ${info.level}  ${info.name}`;
+  $('charLevel').textContent = 'Lv ' + info.level + '  ' + info.name;
   $('xpFill').style.width    = (info.progress * 100) + '%';
-  $('xpLbl').textContent     = info.isMax ? `${xp} XP  MAX` : `${info.into} / ${info.needed} XP`;
+  $('xpLbl').textContent     = info.isMax ? (xp + ' XP  MAX') : (info.into + ' / ' + info.needed + ' XP');
 
   const nextEvo = info.isMax ? '' : evo[Math.min(info.level, evo.length - 1)];
   $('xpNext').textContent = nextEvo;
 
-  const done  = state.habits.filter(h => isDone(h.completions)).length;
-  const total = state.habits.length;
+  const done     = state.habits.filter(function(h) { return isDone(h.completions); }).length;
+  const total    = state.habits.length;
   const xpToNext = info.isMax ? 0 : info.needed - info.into;
-  const mood = total === 0        ? 'Add habits to start earning XP'
-    : done === total              ? 'All done for today'
-    : done > 0                    ? `${done} of ${total} done`
-    : !info.isMax && xpToNext <= 60 ? `${xpToNext} XP to level up`
-    :                                  'Ready when you are';
+  let mood;
+  if (total === 0)                        mood = 'Add habits to start earning XP';
+  else if (done === total)                mood = 'All done for today';
+  else if (done > 0)                      mood = done + ' of ' + total + ' done';
+  else if (!info.isMax && xpToNext <= 60) mood = xpToNext + ' XP to level up';
+  else                                    mood = 'Ready when you are';
   $('charMood').textContent = mood;
 }
 
@@ -725,7 +726,7 @@ function renderHabits() {
   const grid    = $('habitGrid');
   const habits  = state.habits;
   const markAll = $('markAllBtn');
-  const allDone = habits.length > 0 && habits.every(h => isDone(h.completions));
+  const allDone = habits.length > 0 && habits.every(function(h) { return isDone(h.completions); });
 
   markAll.classList.toggle('hidden-btn', allDone || habits.length <= 1);
 
@@ -734,38 +735,38 @@ function renderHabits() {
     return;
   }
 
-  const MAX = 9;
-  const count  = habits.length;
-  const total  = Math.min(count, MAX) + (count > MAX ? 1 : 0);
-  const cols   = total <= 2 ? total : total <= 4 ? 2 : 3;
-  const size   = calcCircleSize(cols, Math.min(count, MAX) + (count > MAX ? 1 : 0));
+  const MAX   = 9;
+  const count = habits.length;
+  const total = Math.min(count, MAX) + (count > MAX ? 1 : 0);
+  const cols  = total <= 2 ? total : total <= 4 ? 2 : 3;
+  const size  = calcCircleSize(cols, total);
 
-  grid.style.gridTemplateColumns = `repeat(${cols}, ${size}px)`;
+  grid.style.gridTemplateColumns = 'repeat(' + cols + ', ' + size + 'px)';
   grid.innerHTML = '';
 
   const todayXp = habits
-    .filter(h => isDone(h.completions))
-    .reduce((s, h) => s + xpForCompletion(calcStreak(h.completions)), 0);
-  $('habitHeaderTitle').textContent = todayXp > 0 ? `Today  +${todayXp} XP` : 'Today';
+    .filter(function(h) { return isDone(h.completions); })
+    .reduce(function(s, h) { return s + xpForCompletion(calcStreak(h.completions)); }, 0);
+  $('habitHeaderTitle').textContent = todayXp > 0 ? ('Today  +' + todayXp + ' XP') : 'Today';
 
-  habits.slice(0, MAX).forEach(habit => {
+  habits.slice(0, MAX).forEach(function(habit) {
     const done   = isDone(habit.completions);
     const streak = calcStreak(habit.completions);
     const circle = el('div', 'habit-circle' + (done ? ' done' : ''));
     circle.style.width  = size + 'px';
     circle.style.height = size + 'px';
-    const fs = Math.max(10, Math.floor(size * 0.13));
-    const ssz = Math.max(8, Math.floor(size * 0.09));
+    const fs  = Math.max(10, Math.floor(size * 0.13));
+    const ssz = Math.max(8,  Math.floor(size * 0.09));
 
     let inner = '';
-    if (streak > 0)  inner += `<span class="circle-streak" style="font-size:${ssz}px">${streak} day streak</span>`;
-    inner += `<span class="circle-name" style="font-size:${fs}px">${escHtml(habit.name)}</span>`;
-    if (done)        inner += `<span class="circle-check" style="font-size:${Math.floor(size*.18)}px">done</span>`;
-    else if (size > 90) inner += `<span class="circle-xp-hint" style="font-size:${ssz}px">+${xpForCompletion(streak + 1)} XP</span>`;
+    if (streak > 0) inner += '<span class="circle-streak" style="font-size:' + ssz + 'px">' + streak + ' day streak</span>';
+    inner += '<span class="circle-name" style="font-size:' + fs + 'px">' + escHtml(habit.name) + '</span>';
+    if (done)            inner += '<span class="circle-check" style="font-size:' + Math.floor(size * .18) + 'px">done</span>';
+    else if (size > 90)  inner += '<span class="circle-xp-hint" style="font-size:' + ssz + 'px">+' + xpForCompletion(streak + 1) + ' XP</span>';
     circle.innerHTML = inner;
 
-    circle.addEventListener('click', () => markHabitDone(habit.id, circle));
-    circle.addEventListener('contextmenu', e => { e.preventDefault(); confirmDelete(habit.id); });
+    circle.addEventListener('click', function() { markHabitDone(habit.id, circle); });
+    circle.addEventListener('contextmenu', function(e) { e.preventDefault(); confirmDelete(habit.id); });
     grid.appendChild(circle);
   });
 
@@ -773,13 +774,13 @@ function renderHabits() {
     const overflow = el('div', 'habit-circle');
     overflow.style.width  = size + 'px';
     overflow.style.height = size + 'px';
-    overflow.innerHTML = `<span style="color:var(--muted);font-size:18px;font-weight:700;position:relative;z-index:1">+${count - MAX}</span>`;
+    overflow.innerHTML = '<span style="color:var(--muted);font-size:18px;font-weight:700;position:relative;z-index:1">+' + (count - MAX) + '</span>';
     grid.appendChild(overflow);
   }
 }
 
 function calcCircleSize(cols, totalCells) {
-  const W = Math.min(window.innerWidth, 600);
+  const W    = Math.min(window.innerWidth, 600);
   const HPAD = 48, GAP = 12;
   const rows = Math.ceil(totalCells / cols);
   const habitSection = document.querySelector('.habit-section');
@@ -790,7 +791,7 @@ function calcCircleSize(cols, totalCells) {
 }
 
 function markHabitDone(id, circleEl) {
-  const habit = state.habits.find(h => h.id === id);
+  const habit = state.habits.find(function(h) { return h.id === id; });
   if (!habit || isDone(habit.completions)) return;
   habit.completions.push(today());
   const streak = calcStreak(habit.completions);
@@ -805,9 +806,9 @@ function markHabitDone(id, circleEl) {
 
   const rect = circleEl.getBoundingClientRect();
   circleEl.classList.add('done', 'pop');
-  circleEl.addEventListener('animationend', () => circleEl.classList.remove('pop'), { once: true });
+  circleEl.addEventListener('animationend', function() { circleEl.classList.remove('pop'); }, { once: true });
 
-  const nowAllDone = state.habits.length > 0 && state.habits.every(h => isDone(h.completions));
+  const nowAllDone = state.habits.length > 0 && state.habits.every(function(h) { return isDone(h.completions); });
 
   showXpFloat(rect.left + rect.width / 2, rect.top + 10, earned);
 
@@ -820,15 +821,15 @@ function markHabitDone(id, circleEl) {
 }
 
 function showXpFloat(x, y, xp) {
-  const el = $('xpFloater');
-  el.textContent = `+${xp} XP`;
-  el.style.left  = x + 'px';
-  el.style.top   = y + 'px';
-  el.style.display = 'block';
-  el.classList.remove('rise');
-  void el.offsetWidth;
-  el.classList.add('rise');
-  setTimeout(() => { el.style.display = 'none'; }, 1050);
+  const floater = $('xpFloater');
+  floater.textContent = '+' + xp + ' XP';
+  floater.style.left    = x + 'px';
+  floater.style.top     = y + 'px';
+  floater.style.display = 'block';
+  floater.classList.remove('rise');
+  void floater.offsetWidth;
+  floater.classList.add('rise');
+  setTimeout(function() { floater.style.display = 'none'; }, 1050);
 }
 
 function showLevelUp() {
@@ -836,11 +837,11 @@ function showLevelUp() {
   const info = getLevelInfo(state.character.xp);
   const evo  = SPECIES_EVO[sp.id] || SPECIES_EVO.wisp;
   $('lvlUpEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
-  $('lvlUpNum').textContent   = `Lv ${info.level}`;
+  $('lvlUpNum').textContent   = 'Lv ' + info.level;
   $('lvlUpName').textContent  = info.name;
   const overlay = $('lvlUpOverlay');
   overlay.classList.remove('hidden');
-  overlay.onclick = () => {
+  overlay.onclick = function() {
     overlay.classList.add('hidden');
     burstConfetti();
   };
@@ -850,25 +851,25 @@ function burstConfetti() {
   const sp = getSpecies();
   const colors = [sp.color, '#f97316', '#22c55e', '#a78bfa', '#e8e8f0', '#f59e0b', '#ec4899'];
   for (let i = 0; i < 28; i++) {
-    const p = document.createElement('div');
+    const p    = document.createElement('div');
     const size = 5 + Math.random() * 7;
     p.style.cssText = [
       'position:fixed', 'z-index:250', 'pointer-events:none',
-      `width:${size}px`, `height:${size}px`,
-      `border-radius:${Math.random() > 0.4 ? '50%' : '2px'}`,
-      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
-      `left:${5 + Math.random() * 90}%`,
-      `top:-8px`,
-      `animation:confettiFall ${0.75 + Math.random() * 0.9}s ease-out ${Math.random() * 0.35}s forwards`,
+      'width:' + size + 'px', 'height:' + size + 'px',
+      'border-radius:' + (Math.random() > 0.4 ? '50%' : '2px'),
+      'background:' + colors[Math.floor(Math.random() * colors.length)],
+      'left:' + (5 + Math.random() * 90) + '%',
+      'top:-8px',
+      'animation:confettiFall ' + (0.75 + Math.random() * 0.9) + 's ease-out ' + (Math.random() * 0.35) + 's forwards',
     ].join(';');
     document.body.appendChild(p);
-    setTimeout(() => p.remove(), 2000);
+    setTimeout(function() { p.remove(); }, 2000);
   }
 }
 
 function confirmDelete(id) {
   if (confirm('Remove this habit? This will delete its streak history.')) {
-    state.habits = state.habits.filter(h => h.id !== id);
+    state.habits = state.habits.filter(function(h) { return h.id !== id; });
     save(state);
     renderHabits();
     renderCharacter();
@@ -885,14 +886,14 @@ function renderDate() {
 
 function bindHomeEvents() {
   $('addBar').addEventListener('click', openModal);
-  $('markAllBtn').addEventListener('click', () => {
-    const t = today();
+  $('markAllBtn').addEventListener('click', function() {
+    const t        = today();
     const oldLevel = getLevelInfo(state.character.xp || 0).level;
-    state.habits.forEach(h => {
+    state.habits.forEach(function(h) {
       if (isDone(h.completions)) return;
       h.completions.push(t);
       const s = calcStreak(h.completions);
-      if (s > (h.bestStreak||0)) h.bestStreak = s;
+      if (s > (h.bestStreak || 0)) h.bestStreak = s;
       state.character.xp = (state.character.xp || 0) + xpForCompletion(s);
     });
     const newLevel = getLevelInfo(state.character.xp).level;
@@ -907,7 +908,7 @@ function bindHomeEvents() {
 // ── Modal ──────────────────────────────────
 function openModal() {
   $('addModal').classList.remove('hidden');
-  setTimeout(() => $('habitInput').focus(), 50);
+  setTimeout(function() { $('habitInput').focus(); }, 50);
 }
 function closeModal() {
   $('addModal').classList.add('hidden');
@@ -917,8 +918,8 @@ function submitHabit() {
   const name = $('habitInput').value.trim();
   if (!name) return;
   state.habits.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    name, createdAt: today(), completions: [], bestStreak: 0,
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name, createdAt: today(), completions: [], bestStreak: 0,
   });
   save(state);
   closeModal();
@@ -930,24 +931,20 @@ function submitHabit() {
 $('cancelAdd').addEventListener('click', closeModal);
 $('confirmAdd').addEventListener('click', submitHabit);
 $('modalBackdrop').addEventListener('click', closeModal);
-$('habitInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitHabit(); });
+$('habitInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') submitHabit(); });
 
 // ── Utils ──────────────────────────────────
 function $(id) { return document.getElementById(id); }
 function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
 function show(id) {
-  ['onboarding','home'].forEach(s => $('s' === s ? s : s).classList.add('hidden'));
-  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.add('hidden'); });
   $(id).classList.remove('hidden');
 }
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-function hexToRgb(hex) {
-  return [parseInt(hex.slice(1,3),16), parseInt(hex.slice(3,5),16), parseInt(hex.slice(5,7),16)].join(',');
-}
 
-window.addEventListener('resize', () => { if (state?.character) renderHabits(); });
+window.addEventListener('resize', function() { if (state && state.character) renderHabits(); });
 
 init();
 </script>
