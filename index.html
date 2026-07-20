@@ -15,7 +15,6 @@
   --text:     #e8e8f0;
   --muted:    #7a7a9a;
   --dim:      #4a4a6a;
-  --danger:   #e05252;
   --sp:       #a78bfa;
 }
 
@@ -27,7 +26,6 @@ html, body {
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
 }
-
 body {
   display: flex;
   flex-direction: column;
@@ -39,7 +37,6 @@ body {
 .screen { display: flex; flex-direction: column; flex: 1; min-height: 0; }
 .hidden { display: none !important; }
 
-/* ── Onboarding ────────────────────────────────────────────── */
 #onboarding {
   align-items: center;
   justify-content: space-between;
@@ -56,7 +53,6 @@ body {
   width: 100%;
   max-width: 360px;
 }
-
 .species-card {
   background: var(--surface);
   border: 2px solid var(--border);
@@ -65,18 +61,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   transition: border-color .2s, background .2s;
   -webkit-tap-highlight-color: transparent;
 }
-.species-card.selected {
-  border-color: var(--sp);
-  background: rgba(167,139,250,0.1);
-}
-.species-emoji  { font-size: 44px; line-height: 1; }
-.species-name   { font-size: 17px; font-weight: 700; }
-.species-hint   { font-size: 12px; color: var(--muted); text-align: center; }
+.species-icon { width: 52px; height: 52px; display: block; }
+.species-icon svg { width: 100%; height: 100%; }
+.species-name { font-size: 17px; font-weight: 700; }
+.species-hint { font-size: 12px; color: var(--muted); text-align: center; }
 
 #beginBtn {
   width: 100%;
@@ -92,12 +85,9 @@ body {
   cursor: pointer;
   transition: background .2s, color .2s;
 }
-#beginBtn.ready { background: var(--sp); color: #fff; }
 
-/* ── Home ──────────────────────────────────────────────────── */
 #home { overflow: hidden; }
 
-/* Character */
 .char-section {
   flex-shrink: 0;
   height: 236px;
@@ -126,7 +116,18 @@ body {
   0%, 100% { transform: scale(1);    opacity: .8; }
   50%       { transform: scale(1.2); opacity: 1;  }
 }
-.char-emoji { font-size: 68px; position: relative; z-index: 1; line-height: 1; }
+.char-emoji {
+  width: 72px;
+  height: 72px;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sp);
+}
+.char-emoji svg { width: 100%; height: 100%; }
+
 .char-name  { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
 .char-level {
   font-size: 10px;
@@ -141,6 +142,7 @@ body {
   40%     { transform: scale(1.5); }
 }
 .char-level.lvl-up { animation: lvlPop .45s cubic-bezier(.34,1.56,.64,1); }
+
 .xp-wrap {
   width: 150px;
   display: flex;
@@ -149,74 +151,40 @@ body {
   gap: 3px;
   margin-top: 3px;
 }
-.xp-track {
-  width: 100%;
-  height: 3px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.xp-fill {
-  height: 100%;
-  background: var(--sp);
-  border-radius: 2px;
-  transition: width .6s cubic-bezier(.4,0,.2,1);
-}
-.xp-lbl { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; }
-.char-mood  { font-size: 12px; color: var(--muted); margin-top: 1px; }
+.xp-track-row { display: flex; align-items: center; gap: 6px; width: 100%; }
+.xp-track { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.xp-fill  { height: 100%; background: var(--sp); border-radius: 2px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+.xp-lbl   { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; }
+.char-mood { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
-/* XP floater */
+.xp-next { width: 15px; height: 15px; opacity: 0.3; flex-shrink: 0; color: var(--sp); display: flex; align-items: center; }
+.xp-next svg { width: 100%; height: 100%; }
+
 .xp-floater {
-  position: fixed;
-  z-index: 300;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--sp);
-  pointer-events: none;
-  white-space: nowrap;
-  transform: translateX(-50%);
-  display: none;
+  position: fixed; z-index: 300; font-size: 13px; font-weight: 800;
+  color: var(--sp); pointer-events: none; white-space: nowrap;
+  transform: translateX(-50%); display: none;
 }
 @keyframes xpRise {
-  0%   { transform: translateX(-50%) translateY(0);    opacity: 1; }
+  0%   { transform: translateX(-50%) translateY(0);     opacity: 1; }
   100% { transform: translateX(-50%) translateY(-64px); opacity: 0; }
 }
 .xp-floater.rise { animation: xpRise 1s ease-out forwards; }
 
-/* Evolution teaser next to XP bar */
-.xp-track-row { display: flex; align-items: center; gap: 6px; width: 100%; }
-.xp-next { font-size: 13px; opacity: 0.28; line-height: 1; flex-shrink: 0; }
+.circle-xp-hint { position: relative; z-index: 1; color: var(--dim); font-weight: 700; letter-spacing: 0.02em; line-height: 1; }
 
-/* XP preview on uncompleted circles */
-.circle-xp-hint {
-  position: relative;
-  z-index: 1;
-  color: var(--dim);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  line-height: 1;
-}
-
-/* Level-up celebration overlay */
 .lvlup-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 400;
+  position: fixed; inset: 0; z-index: 400;
   background: rgba(10,10,15,0.93);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   cursor: pointer;
 }
 .lvlup-overlay.hidden { display: none !important; }
 .lvlup-overlay:not(.hidden) { animation: lvlFadeIn .3s ease both; }
 @keyframes lvlFadeIn { from { opacity: 0; } to { opacity: 1; } }
-.lvlup-emoji {
-  font-size: 96px;
-  line-height: 1;
-  animation: emojiBounce .55s cubic-bezier(.34,1.56,.64,1) .12s both;
-}
+.lvlup-emoji { width: 120px; height: 120px; display: block; color: var(--sp); }
+.lvlup-emoji svg { width: 100%; height: 100%; }
+.lvlup-emoji-wrap { animation: emojiBounce .55s cubic-bezier(.34,1.56,.64,1) .1s both; }
 @keyframes emojiBounce {
   from { transform: scale(0.15); opacity: 0; }
   to   { transform: scale(1);    opacity: 1; }
@@ -226,83 +194,40 @@ body {
 .lvlup-name { font-size: 24px; font-weight: 700; color: var(--sp); margin-top: 2px; }
 .lvlup-tap  { font-size: 12px; color: var(--dim); margin-top: 32px; letter-spacing: 0.05em; }
 
-/* Confetti */
 @keyframes confettiFall {
   0%   { transform: translateY(0)     rotate(0deg);   opacity: 1; }
   100% { transform: translateY(500px) rotate(600deg); opacity: 0; }
 }
 
-/* Habits */
 .habit-section {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0 24px;
-  overflow: hidden;
-  justify-content: center;
+  flex: 1; min-height: 0; display: flex; flex-direction: column;
+  padding: 0 24px; overflow: hidden; justify-content: center;
 }
 .habit-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-  flex-shrink: 0;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 14px; flex-shrink: 0;
 }
 .habit-header-title { font-size: 16px; font-weight: 700; }
 #markAllBtn {
-  background: none;
-  border: none;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--sp);
-  cursor: pointer;
-  padding: 4px 0;
+  background: none; border: none; font-family: inherit;
+  font-size: 13px; font-weight: 600; color: var(--sp); cursor: pointer; padding: 4px 0;
 }
 #markAllBtn.hidden-btn { visibility: hidden; }
 
-.habit-grid {
-  display: grid;
-  gap: 12px;
-  align-content: start;
-  justify-content: center;
-}
+.habit-grid { display: grid; gap: 12px; align-content: start; justify-content: center; }
 .habit-empty {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dim);
-  font-size: 14px;
-  text-align: center;
-  padding: 24px 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--dim); font-size: 14px; text-align: center; padding: 24px 0;
 }
-
 .habit-circle {
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 12px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: border-color .25s;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
+  border-radius: 50%; border: 2px solid var(--border); background: var(--surface);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 12px; cursor: pointer; position: relative; overflow: hidden;
+  transition: border-color .25s; -webkit-tap-highlight-color: transparent; user-select: none;
 }
 .habit-circle::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: var(--sp);
-  opacity: 0;
-  transition: opacity .28s ease;
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: var(--sp); opacity: 0; transition: opacity .28s ease;
 }
 .habit-circle.done { border-color: var(--sp); }
 .habit-circle.done::before { opacity: 1; }
@@ -312,180 +237,66 @@ body {
   35%  { transform: scale(.87); }
   100% { transform: scale(1); }
 }
-
-.circle-streak {
-  position: relative;
-  z-index: 1;
-  font-size: 10px;
-  color: rgba(255,255,255,.6);
-  font-weight: 600;
-  line-height: 1;
-}
+.circle-streak { position: relative; z-index: 1; font-size: 10px; color: rgba(255,255,255,.6); font-weight: 600; line-height: 1; }
 .circle-name {
-  position: relative;
-  z-index: 1;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.3;
-  color: var(--muted);
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-  word-break: break-word;
-  transition: color .25s;
+  position: relative; z-index: 1; font-weight: 600; text-align: center; line-height: 1.3;
+  color: var(--muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden; word-break: break-word; transition: color .25s;
 }
 .habit-circle.done .circle-name { color: #fff; }
-.circle-check {
-  position: relative;
-  z-index: 1;
-  font-size: 16px;
-  color: rgba(255,255,255,.85);
-  font-weight: 700;
-  line-height: 1;
-}
+.circle-check { position: relative; z-index: 1; color: rgba(255,255,255,.85); font-weight: 700; line-height: 1; }
 
-/* Date Section */
 .date-section { flex-shrink: 0; padding: 12px 24px 0; }
-.date-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.date-month-lbl {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  color: var(--muted);
-  text-transform: uppercase;
-  flex: 1;
-}
-.date-day-num {
-  font-size: 80px;
-  font-weight: 900;
-  color: var(--sp);
-  line-height: 1;
-  letter-spacing: -0.04em;
-  text-align: center;
-  flex: 1;
-}
-.date-year-lbl {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  color: var(--dim);
-  text-align: right;
-  flex: 1;
-}
+.date-hero { display: flex; align-items: center; justify-content: space-between; }
+.date-month-lbl { font-size: 11px; font-weight: 700; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; flex: 1; }
+.date-day-num   { font-size: 80px; font-weight: 900; color: var(--sp); line-height: 1; letter-spacing: -0.04em; text-align: center; flex: 1; }
+.date-year-lbl  { font-size: 11px; font-weight: 600; letter-spacing: 0.14em; color: var(--dim); text-align: right; flex: 1; }
 
-/* Bottom Bar */
-.bottom-bar {
-  flex-shrink: 0;
-  padding: 6px 16px 10px;
-}
+.bottom-bar { flex-shrink: 0; padding: 6px 16px 10px; }
 .bottom-bar-inner {
-  display: flex;
-  align-items: center;
-  background: var(--surface);
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
-  padding: 10px 10px 10px 18px;
-  cursor: pointer;
-  gap: 12px;
+  display: flex; align-items: center; background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 10px 10px 10px 18px; cursor: pointer; gap: 12px;
   -webkit-tap-highlight-color: transparent;
 }
 .bottom-bar-placeholder { flex: 1; color: var(--dim); font-size: 15px; }
 .bottom-bar-pill {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: var(--sp);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  color: #fff;
-  font-weight: 300;
-  line-height: 1;
-  flex-shrink: 0;
+  width: 36px; height: 36px; border-radius: 10px; background: var(--sp);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; color: #fff; font-weight: 300; line-height: 1; flex-shrink: 0;
 }
 
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  z-index: 100;
-}
-.modal-backdrop {
-  flex: 1;
-  background: rgba(0,0,0,.5);
-}
+.modal-overlay { position: fixed; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; z-index: 100; }
+.modal-backdrop { flex: 1; background: rgba(0,0,0,.5); }
 .modal-sheet {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-radius: 24px 24px 0 0;
-  padding: 16px 24px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  transform: translateY(100%);
-  transition: transform .3s cubic-bezier(.32,1,.6,1);
+  background: var(--surface); border-top: 1px solid var(--border);
+  border-radius: 24px 24px 0 0; padding: 16px 24px 32px;
+  display: flex; flex-direction: column; gap: 16px;
+  transform: translateY(100%); transition: transform .3s cubic-bezier(.32,1,.6,1);
 }
 .modal-overlay:not(.hidden) .modal-sheet { transform: translateY(0); }
-.modal-handle {
-  width: 40px;
-  height: 4px;
-  border-radius: 2px;
-  background: #3a3a50;
-  align-self: center;
-}
+.modal-handle { width: 40px; height: 4px; border-radius: 2px; background: #3a3a50; align-self: center; }
 .modal-title { font-size: 18px; font-weight: 700; }
 .modal-input {
-  background: var(--bg);
-  border: 1.5px solid var(--border);
-  border-radius: 12px;
-  color: var(--text);
-  padding: 14px 16px;
-  font-size: 16px;
-  font-family: inherit;
-  outline: none;
-  transition: border-color .2s;
+  background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px;
+  color: var(--text); padding: 14px 16px; font-size: 16px; font-family: inherit;
+  outline: none; transition: border-color .2s;
 }
 .modal-input:focus { border-color: var(--sp); }
 .modal-input::placeholder { color: var(--dim); }
 .modal-actions { display: flex; gap: 10px; }
 .modal-cancel {
-  flex: 1;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: var(--surface2);
-  color: var(--muted);
-  font-size: 15px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
+  flex: 1; padding: 14px; border: none; border-radius: 12px;
+  background: var(--surface2); color: var(--muted); font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer;
 }
 .modal-add {
-  flex: 2;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: var(--sp);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
+  flex: 2; padding: 14px; border: none; border-radius: 12px;
+  background: var(--sp); color: #fff; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer;
 }
 </style>
 </head>
 <body>
 
-<!-- ── Onboarding ────────────────────────────────────────── -->
 <div id="onboarding" class="screen hidden">
   <div class="ob-header">
     <h1 class="ob-title">Choose your companion</h1>
@@ -495,7 +306,6 @@ body {
   <button id="beginBtn" disabled>Pick a companion</button>
 </div>
 
-<!-- ── Home ───────────────────────────────────────────────── -->
 <div id="home" class="screen hidden">
   <div class="date-section">
     <div class="date-hero">
@@ -504,13 +314,12 @@ body {
       <span class="date-year-lbl"  id="dateYear"></span>
     </div>
   </div>
-
   <div class="char-section">
     <div class="char-center">
       <div class="char-glow" id="charGlow"></div>
       <span class="char-emoji" id="charEmoji"></span>
     </div>
-    <span class="char-name" id="charName"></span>
+    <span class="char-name"  id="charName"></span>
     <span class="char-level" id="charLevel">Lv 1  Wanderer</span>
     <div class="xp-wrap">
       <div class="xp-track-row">
@@ -521,7 +330,6 @@ body {
     </div>
     <span class="char-mood" id="charMood"></span>
   </div>
-
   <div class="habit-section">
     <div class="habit-header">
       <span class="habit-header-title" id="habitHeaderTitle">Today</span>
@@ -529,7 +337,6 @@ body {
     </div>
     <div class="habit-grid" id="habitGrid"></div>
   </div>
-
   <div class="bottom-bar" id="addBar">
     <div class="bottom-bar-inner">
       <span class="bottom-bar-placeholder">Add a habit</span>
@@ -538,7 +345,6 @@ body {
   </div>
 </div>
 
-<!-- ── Add Modal ────────────────────────────────────────── -->
 <div id="addModal" class="modal-overlay hidden">
   <div class="modal-backdrop" id="modalBackdrop"></div>
   <div class="modal-sheet">
@@ -547,15 +353,17 @@ body {
     <input class="modal-input" id="habitInput" type="text" placeholder="e.g. Drink water, Read 10 pages" maxlength="60" autocomplete="off" />
     <div class="modal-actions">
       <button class="modal-cancel" id="cancelAdd">Cancel</button>
-      <button class="modal-add" id="confirmAdd">Add habit</button>
+      <button class="modal-add"    id="confirmAdd">Add habit</button>
     </div>
   </div>
 </div>
 
 <div id="lvlUpOverlay" class="lvlup-overlay hidden">
-  <span class="lvlup-emoji" id="lvlUpEmoji"></span>
+  <div class="lvlup-emoji-wrap">
+    <span class="lvlup-emoji" id="lvlUpEmoji"></span>
+  </div>
   <p class="lvlup-tag">LEVEL UP</p>
-  <p class="lvlup-num" id="lvlUpNum">Lv 2</p>
+  <p class="lvlup-num"  id="lvlUpNum">Lv 2</p>
   <p class="lvlup-name" id="lvlUpName">Apprentice</p>
   <p class="lvlup-tap">Tap anywhere to continue</p>
 </div>
@@ -565,98 +373,92 @@ body {
 <script>
 const STORAGE_KEY = 'consistent_v2';
 
-const SPECIES = [
-  { id: 'ember',  name: 'Ember',  emoji: '🔥', hint: 'A fiery trailblazer', color: '#f97316', glow: 'rgba(249,115,22,0.18)'  },
-  { id: 'sprout', name: 'Sprout', emoji: '🌱', hint: 'Patient and steady',   color: '#22c55e', glow: 'rgba(34,197,94,0.18)'   },
-  { id: 'pebble', name: 'Pebble', emoji: '🪨', hint: 'Grounded and strong',  color: '#94a3b8', glow: 'rgba(148,163,184,0.18)' },
-  { id: 'wisp',   name: 'Wisp',   emoji: '✨',        hint: 'Curious and bright',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)' },
+const SP_ICONS = {
+  ember:  '<svg viewBox="0 0 100 100" fill="none"><path d="M50 8C56 20 70 34 70 50C70 64 61 74 50 74C39 74 30 64 30 50C30 34 44 20 50 8Z" fill="currentColor"/><path d="M50 38C53 44 58 49 58 56C58 62 54 67 50 67C46 67 42 62 42 56C42 49 47 44 50 38Z" fill="currentColor" opacity="0.28"/></svg>',
+  sprout: '<svg viewBox="0 0 100 100" fill="none"><rect x="47" y="57" width="6" height="27" rx="3" fill="currentColor"/><ellipse cx="50" cy="43" rx="13" ry="21" fill="currentColor" transform="rotate(-6,50,43)"/><ellipse cx="29" cy="57" rx="10" ry="17" fill="currentColor" transform="rotate(-52,29,57)" opacity="0.72"/><ellipse cx="71" cy="57" rx="10" ry="17" fill="currentColor" transform="rotate(52,71,57)" opacity="0.72"/></svg>',
+  pebble: '<svg viewBox="0 0 100 100" fill="none"><ellipse cx="50" cy="63" rx="33" ry="22" fill="currentColor"/><ellipse cx="37" cy="46" rx="20" ry="15" fill="currentColor" opacity="0.7"/></svg>',
+  wisp:   '<svg viewBox="0 0 100 100" fill="none"><path d="M50 10L54.5 45.5L90 50L54.5 54.5L50 90L45.5 54.5L10 50L45.5 45.5Z" fill="currentColor"/><circle cx="50" cy="50" r="7" fill="currentColor" opacity="0.25"/></svg>',
+};
+
+const EVO_SVGS = [
+  '<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="26" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="18" fill="currentColor"/><circle cx="50" cy="50" r="30" stroke="currentColor" stroke-width="3.5" opacity="0.4"/></svg>',
+  '<svg viewBox="0 0 100 100" fill="none"><polygon points="50,16 82,78 18,78" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 100 100" fill="none"><path d="M50 12L55 45L88 50L55 55L50 88L45 55L12 50L45 45Z" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 100 100" fill="none"><path d="M50 8L54 36L78 22L64 42L90 50L64 58L78 78L54 64L50 92L46 64L22 78L36 58L10 50L36 42L22 22L46 36Z" fill="currentColor"/></svg>',
+  '<svg viewBox="0 0 100 100" fill="none"><path d="M14 76L14 46L30 62L50 20L70 62L86 46L86 76Z" fill="currentColor"/><rect x="14" y="76" width="72" height="9" rx="3" fill="currentColor" opacity="0.5"/></svg>',
 ];
 
-// ── XP System ──────────────────────────────────────────────────────
+const SPECIES = [
+  { id: 'ember',  name: 'Ember',  hint: 'A fiery trailblazer', color: '#f97316', glow: 'rgba(249,115,22,0.18)'  },
+  { id: 'sprout', name: 'Sprout', hint: 'Patient and steady',   color: '#22c55e', glow: 'rgba(34,197,94,0.18)'   },
+  { id: 'pebble', name: 'Pebble', hint: 'Grounded and strong',  color: '#94a3b8', glow: 'rgba(148,163,184,0.18)' },
+  { id: 'wisp',   name: 'Wisp',   hint: 'Curious and bright',   color: '#a78bfa', glow: 'rgba(167,139,250,0.18)' },
+];
+
 const XP_THRESHOLDS = [0, 100, 275, 550, 1100, 2200];
 const LEVEL_NAMES   = ['Wanderer','Apprentice','Keeper','Guardian','Champion','Legend'];
-const SPECIES_EVO   = {
-  ember:  ['🔥','⚡','🌋','☄️','🌞','✴️'],
-  sprout: ['🌱','🌿','🌳','🌴','🌲','🎋'],
-  pebble: ['🪨','⚫','🔵','💎','💠','🔮'],
-  wisp:   ['✨','💫','⭐','🌟','🌠','🪐'],
-};
-const XP_BASE = 10;
-const XP_STREAK_BONUS = 2;
-const XP_STREAK_CAP   = 20;
+const XP_BASE = 10, XP_STREAK_BONUS = 2, XP_STREAK_CAP = 20;
 
 function getLevelInfo(xp) {
   xp = xp || 0;
   let lvl = 0;
   while (lvl < XP_THRESHOLDS.length - 1 && xp >= XP_THRESHOLDS[lvl + 1]) lvl++;
-  const isMax     = lvl >= XP_THRESHOLDS.length - 1;
-  const xpStart   = XP_THRESHOLDS[lvl];
-  const xpEnd     = isMax ? null : XP_THRESHOLDS[lvl + 1];
-  const into      = xp - xpStart;
-  const needed    = isMax ? null : xpEnd - xpStart;
+  const isMax  = lvl >= XP_THRESHOLDS.length - 1;
+  const into   = xp - XP_THRESHOLDS[lvl];
+  const needed = isMax ? null : XP_THRESHOLDS[lvl + 1] - XP_THRESHOLDS[lvl];
   return { level: lvl + 1, name: LEVEL_NAMES[lvl], into, needed, progress: isMax ? 1 : into / needed, isMax };
 }
-
-function xpForCompletion(streak) {
-  return XP_BASE + Math.min(streak * XP_STREAK_BONUS, XP_STREAK_CAP);
-}
+function xpForCompletion(streak) { return XP_BASE + Math.min(streak * XP_STREAK_BONUS, XP_STREAK_CAP); }
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
-// ── Data ──────────────────────────────────
 function today() { return new Date().toISOString().slice(0, 10); }
-function isDone(completions) { return completions.includes(today()); }
+function isDone(c) { return c.includes(today()); }
 
 function calcStreak(completions) {
   if (!completions.length) return 0;
   const sorted = [...completions].sort();
-  const t = today();
-  const last = sorted[sorted.length - 1];
+  const last = sorted[sorted.length - 1], t = today();
   if (last !== t) {
     const yest = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
     if (last !== yest) return 0;
   }
   let s = 1;
   for (let i = sorted.length - 1; i > 0; i--) {
-    const diff = (new Date(sorted[i]) - new Date(sorted[i-1])) / 864e5;
-    if (diff === 1) s++; else break;
+    if ((new Date(sorted[i]) - new Date(sorted[i-1])) / 864e5 === 1) s++; else break;
   }
   return s;
 }
 
-function load() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; }
-}
-function save(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function load() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || null; } catch { return null; } }
+function save(d) { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); }
 
 let state = load();
 
-// ── Init ──────────────────────────────────
 function init() {
   if (!state || !state.character) showOnboarding();
-  else {
-    if (!('xp' in state.character)) state.character.xp = 0;
-    showHome();
-  }
+  else { if (!('xp' in state.character)) state.character.xp = 0; showHome(); }
 }
 
-// ── Onboarding ──────────────────────────────────
 function showOnboarding() {
   show('onboarding');
   const grid = $('speciesGrid');
   grid.innerHTML = '';
   let selectedId = null;
-
   SPECIES.forEach(function(sp) {
     const card = el('div', 'species-card');
-    card.innerHTML = '<span class="species-emoji">' + sp.emoji + '</span>' +
+    card.innerHTML =
+      '<span class="species-icon" style="color:' + sp.color + '">' + (SP_ICONS[sp.id] || '') + '</span>' +
       '<span class="species-name">' + sp.name + '</span>' +
       '<span class="species-hint">' + sp.hint + '</span>';
     card.addEventListener('click', function() {
-      document.querySelectorAll('.species-card').forEach(function(c) { c.classList.remove('selected'); });
+      document.querySelectorAll('.species-card').forEach(function(c) { c.classList.remove('selected'); c.style.borderColor = ''; c.style.background = ''; });
       card.classList.add('selected');
+      card.style.borderColor = sp.color;
+      card.style.background  = sp.glow;
       selectedId = sp.id;
-      const btn = $('beginBtn');
+      var btn = $('beginBtn');
       btn.textContent = 'Begin with ' + sp.name;
       btn.style.background = sp.color;
       btn.style.color = '#fff';
@@ -664,56 +466,41 @@ function showOnboarding() {
     });
     grid.appendChild(card);
   });
-
   $('beginBtn').addEventListener('click', function() {
     if (!selectedId) return;
     state = { character: { species: selectedId, xp: 0 }, habits: [] };
-    save(state);
-    showHome();
+    save(state); showHome();
   }, { once: true });
 }
 
-// ── Home ──────────────────────────────────
 function showHome() {
   show('home');
-  applySpeciesTheme();
-  renderCharacter();
-  renderHabits();
-  renderDate();
-  bindHomeEvents();
+  applySpeciesTheme(); renderCharacter(); renderHabits(); renderDate(); bindHomeEvents();
 }
 
+function getSpecies() { return SPECIES.find(function(s) { return s.id === state.character.species; }) || SPECIES[3]; }
+
 function applySpeciesTheme() {
-  const sp = getSpecies();
+  var sp = getSpecies();
   document.documentElement.style.setProperty('--sp', sp.color);
   $('charGlow').style.background = sp.glow;
   $('addPill').style.background  = sp.color;
 }
 
-function getSpecies() {
-  return SPECIES.find(function(s) { return s.id === state.character.species; }) || SPECIES[3];
-}
+function evoSvg(idx) { return EVO_SVGS[Math.min(idx, EVO_SVGS.length - 1)]; }
 
 function renderCharacter() {
-  const sp   = getSpecies();
-  const xp   = state.character.xp || 0;
-  const info = getLevelInfo(xp);
-  const evo  = SPECIES_EVO[sp.id] || SPECIES_EVO.wisp;
-
-  $('charEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
+  var sp = getSpecies(), xp = state.character.xp || 0, info = getLevelInfo(xp);
+  $('charEmoji').innerHTML   = evoSvg(info.level - 1);
   $('charName').textContent  = sp.name;
   $('charName').style.color  = sp.color;
   $('charLevel').textContent = 'Lv ' + info.level + '  ' + info.name;
   $('xpFill').style.width    = (info.progress * 100) + '%';
   $('xpLbl').textContent     = info.isMax ? (xp + ' XP  MAX') : (info.into + ' / ' + info.needed + ' XP');
-
-  const nextEvo = info.isMax ? '' : evo[Math.min(info.level, evo.length - 1)];
-  $('xpNext').textContent = nextEvo;
-
-  const done     = state.habits.filter(function(h) { return isDone(h.completions); }).length;
-  const total    = state.habits.length;
-  const xpToNext = info.isMax ? 0 : info.needed - info.into;
-  let mood;
+  $('xpNext').innerHTML      = info.isMax ? '' : evoSvg(info.level);
+  var done = state.habits.filter(function(h) { return isDone(h.completions); }).length;
+  var total = state.habits.length, xpToNext = info.isMax ? 0 : info.needed - info.into;
+  var mood;
   if (total === 0)                        mood = 'Add habits to start earning XP';
   else if (done === total)                mood = 'All done for today';
   else if (done > 0)                      mood = done + ' of ' + total + ' done';
@@ -723,162 +510,113 @@ function renderCharacter() {
 }
 
 function renderHabits() {
-  const grid    = $('habitGrid');
-  const habits  = state.habits;
-  const markAll = $('markAllBtn');
-  const allDone = habits.length > 0 && habits.every(function(h) { return isDone(h.completions); });
-
+  var grid = $('habitGrid'), habits = state.habits, markAll = $('markAllBtn');
+  var allDone = habits.length > 0 && habits.every(function(h) { return isDone(h.completions); });
   markAll.classList.toggle('hidden-btn', allDone || habits.length <= 1);
-
-  if (!habits.length) {
-    grid.innerHTML = '<div class="habit-empty">Tap below to add your first habit</div>';
-    return;
-  }
-
-  const MAX   = 9;
-  const count = habits.length;
-  const total = Math.min(count, MAX) + (count > MAX ? 1 : 0);
-  const cols  = total <= 2 ? total : total <= 4 ? 2 : 3;
-  const size  = calcCircleSize(cols, total);
-
+  if (!habits.length) { grid.innerHTML = '<div class="habit-empty">Tap below to add your first habit</div>'; return; }
+  var MAX = 9, count = habits.length;
+  var total = Math.min(count, MAX) + (count > MAX ? 1 : 0);
+  var cols = total <= 2 ? total : total <= 4 ? 2 : 3;
+  var size = calcCircleSize(cols, total);
   grid.style.gridTemplateColumns = 'repeat(' + cols + ', ' + size + 'px)';
   grid.innerHTML = '';
-
-  const todayXp = habits
-    .filter(function(h) { return isDone(h.completions); })
+  var todayXp = habits.filter(function(h) { return isDone(h.completions); })
     .reduce(function(s, h) { return s + xpForCompletion(calcStreak(h.completions)); }, 0);
   $('habitHeaderTitle').textContent = todayXp > 0 ? ('Today  +' + todayXp + ' XP') : 'Today';
-
   habits.slice(0, MAX).forEach(function(habit) {
-    const done   = isDone(habit.completions);
-    const streak = calcStreak(habit.completions);
-    const circle = el('div', 'habit-circle' + (done ? ' done' : ''));
-    circle.style.width  = size + 'px';
-    circle.style.height = size + 'px';
-    const fs  = Math.max(10, Math.floor(size * 0.13));
-    const ssz = Math.max(8,  Math.floor(size * 0.09));
-
-    let inner = '';
+    var done = isDone(habit.completions), streak = calcStreak(habit.completions);
+    var circle = el('div', 'habit-circle' + (done ? ' done' : ''));
+    circle.style.width = circle.style.height = size + 'px';
+    var fs = Math.max(10, Math.floor(size * 0.13)), ssz = Math.max(8, Math.floor(size * 0.09));
+    var inner = '';
     if (streak > 0) inner += '<span class="circle-streak" style="font-size:' + ssz + 'px">' + streak + ' day streak</span>';
     inner += '<span class="circle-name" style="font-size:' + fs + 'px">' + escHtml(habit.name) + '</span>';
-    if (done)            inner += '<span class="circle-check" style="font-size:' + Math.floor(size * .18) + 'px">done</span>';
-    else if (size > 90)  inner += '<span class="circle-xp-hint" style="font-size:' + ssz + 'px">+' + xpForCompletion(streak + 1) + ' XP</span>';
+    if (done)           inner += '<span class="circle-check" style="font-size:' + Math.floor(size*.18) + 'px">done</span>';
+    else if (size > 90) inner += '<span class="circle-xp-hint" style="font-size:' + ssz + 'px">+' + xpForCompletion(streak+1) + ' XP</span>';
     circle.innerHTML = inner;
-
     circle.addEventListener('click', function() { markHabitDone(habit.id, circle); });
     circle.addEventListener('contextmenu', function(e) { e.preventDefault(); confirmDelete(habit.id); });
     grid.appendChild(circle);
   });
-
   if (count > MAX) {
-    const overflow = el('div', 'habit-circle');
-    overflow.style.width  = size + 'px';
-    overflow.style.height = size + 'px';
-    overflow.innerHTML = '<span style="color:var(--muted);font-size:18px;font-weight:700;position:relative;z-index:1">+' + (count - MAX) + '</span>';
-    grid.appendChild(overflow);
+    var ov = el('div', 'habit-circle');
+    ov.style.width = ov.style.height = size + 'px';
+    ov.innerHTML = '<span style="color:var(--muted);font-size:18px;font-weight:700;position:relative;z-index:1">+' + (count-MAX) + '</span>';
+    grid.appendChild(ov);
   }
 }
 
 function calcCircleSize(cols, totalCells) {
-  const W    = Math.min(window.innerWidth, 600);
-  const HPAD = 48, GAP = 12;
-  const rows = Math.ceil(totalCells / cols);
-  const habitSection = document.querySelector('.habit-section');
-  const availH = habitSection ? habitSection.clientHeight - 36 : 220;
-  const maxW = (W - HPAD - (cols - 1) * GAP) / cols;
-  const maxH = (availH - (rows - 1) * GAP) / rows;
-  return Math.floor(Math.min(maxW, maxH, 180));
+  var W = Math.min(window.innerWidth, 600), HPAD = 48, GAP = 12;
+  var rows = Math.ceil(totalCells / cols);
+  var sec = document.querySelector('.habit-section'), availH = sec ? sec.clientHeight - 36 : 220;
+  return Math.floor(Math.min((W-HPAD-(cols-1)*GAP)/cols, (availH-(rows-1)*GAP)/rows, 180));
 }
 
 function markHabitDone(id, circleEl) {
-  const habit = state.habits.find(function(h) { return h.id === id; });
+  var habit = state.habits.find(function(h) { return h.id === id; });
   if (!habit || isDone(habit.completions)) return;
   habit.completions.push(today());
-  const streak = calcStreak(habit.completions);
-  if (streak > (habit.bestStreak || 0)) habit.bestStreak = streak;
-
-  const earned   = xpForCompletion(streak);
-  const oldLevel = getLevelInfo(state.character.xp || 0).level;
-  state.character.xp = (state.character.xp || 0) + earned;
-  const newLevel = getLevelInfo(state.character.xp).level;
-
+  var streak = calcStreak(habit.completions);
+  if (streak > (habit.bestStreak||0)) habit.bestStreak = streak;
+  var earned = xpForCompletion(streak);
+  var oldLevel = getLevelInfo(state.character.xp||0).level;
+  state.character.xp = (state.character.xp||0) + earned;
+  var newLevel = getLevelInfo(state.character.xp).level;
   save(state);
-
-  const rect = circleEl.getBoundingClientRect();
-  circleEl.classList.add('done', 'pop');
+  var rect = circleEl.getBoundingClientRect();
+  circleEl.classList.add('done','pop');
   circleEl.addEventListener('animationend', function() { circleEl.classList.remove('pop'); }, { once: true });
-
-  const nowAllDone = state.habits.length > 0 && state.habits.every(function(h) { return isDone(h.completions); });
-
-  showXpFloat(rect.left + rect.width / 2, rect.top + 10, earned);
-
+  var nowAllDone = state.habits.every(function(h) { return isDone(h.completions); });
+  showXpFloat(rect.left + rect.width/2, rect.top + 10, earned);
   if (newLevel > oldLevel) showLevelUp();
   else if (nowAllDone) burstConfetti();
-
-  renderCharacter();
-  renderHabits();
-  renderDate();
+  renderCharacter(); renderHabits(); renderDate();
 }
 
 function showXpFloat(x, y, xp) {
-  const floater = $('xpFloater');
-  floater.textContent = '+' + xp + ' XP';
-  floater.style.left    = x + 'px';
-  floater.style.top     = y + 'px';
-  floater.style.display = 'block';
-  floater.classList.remove('rise');
-  void floater.offsetWidth;
-  floater.classList.add('rise');
-  setTimeout(function() { floater.style.display = 'none'; }, 1050);
+  var f = $('xpFloater');
+  f.textContent = '+' + xp + ' XP'; f.style.left = x+'px'; f.style.top = y+'px'; f.style.display='block';
+  f.classList.remove('rise'); void f.offsetWidth; f.classList.add('rise');
+  setTimeout(function() { f.style.display='none'; }, 1050);
 }
 
 function showLevelUp() {
-  const sp   = getSpecies();
-  const info = getLevelInfo(state.character.xp);
-  const evo  = SPECIES_EVO[sp.id] || SPECIES_EVO.wisp;
-  $('lvlUpEmoji').textContent = evo[Math.min(info.level - 1, evo.length - 1)];
-  $('lvlUpNum').textContent   = 'Lv ' + info.level;
-  $('lvlUpName').textContent  = info.name;
-  const overlay = $('lvlUpOverlay');
+  var info = getLevelInfo(state.character.xp);
+  $('lvlUpEmoji').innerHTML = evoSvg(info.level-1);
+  $('lvlUpNum').textContent = 'Lv ' + info.level;
+  $('lvlUpName').textContent = info.name;
+  var overlay = $('lvlUpOverlay');
   overlay.classList.remove('hidden');
-  overlay.onclick = function() {
-    overlay.classList.add('hidden');
-    burstConfetti();
-  };
+  overlay.onclick = function() { overlay.classList.add('hidden'); burstConfetti(); };
 }
 
 function burstConfetti() {
-  const sp = getSpecies();
-  const colors = [sp.color, '#f97316', '#22c55e', '#a78bfa', '#e8e8f0', '#f59e0b', '#ec4899'];
-  for (let i = 0; i < 28; i++) {
-    const p    = document.createElement('div');
-    const size = 5 + Math.random() * 7;
-    p.style.cssText = [
-      'position:fixed', 'z-index:250', 'pointer-events:none',
-      'width:' + size + 'px', 'height:' + size + 'px',
-      'border-radius:' + (Math.random() > 0.4 ? '50%' : '2px'),
-      'background:' + colors[Math.floor(Math.random() * colors.length)],
-      'left:' + (5 + Math.random() * 90) + '%',
-      'top:-8px',
-      'animation:confettiFall ' + (0.75 + Math.random() * 0.9) + 's ease-out ' + (Math.random() * 0.35) + 's forwards',
+  var sp = getSpecies();
+  var colors = [sp.color,'#f97316','#22c55e','#a78bfa','#e8e8f0','#f59e0b','#ec4899'];
+  for (var i=0; i<28; i++) {
+    var p = document.createElement('div'), size = 5+Math.random()*7;
+    p.style.cssText = ['position:fixed','z-index:250','pointer-events:none',
+      'width:'+size+'px','height:'+size+'px',
+      'border-radius:'+(Math.random()>.4?'50%':'2px'),
+      'background:'+colors[Math.floor(Math.random()*colors.length)],
+      'left:'+(5+Math.random()*90)+'%','top:-8px',
+      'animation:confettiFall '+(0.75+Math.random()*0.9)+'s ease-out '+(Math.random()*0.35)+'s forwards',
     ].join(';');
     document.body.appendChild(p);
-    setTimeout(function() { p.remove(); }, 2000);
+    setTimeout(function(){p.remove();},2000);
   }
 }
 
 function confirmDelete(id) {
   if (confirm('Remove this habit? This will delete its streak history.')) {
-    state.habits = state.habits.filter(function(h) { return h.id !== id; });
-    save(state);
-    renderHabits();
-    renderCharacter();
-    renderDate();
+    state.habits = state.habits.filter(function(h){return h.id!==id;});
+    save(state); renderHabits(); renderCharacter(); renderDate();
   }
 }
 
 function renderDate() {
-  const now = new Date();
+  var now = new Date();
   $('dateMonth').textContent = MONTHS[now.getMonth()].toUpperCase();
   $('dateDay').textContent   = now.getDate();
   $('dateYear').textContent  = now.getFullYear();
@@ -887,64 +625,38 @@ function renderDate() {
 function bindHomeEvents() {
   $('addBar').addEventListener('click', openModal);
   $('markAllBtn').addEventListener('click', function() {
-    const t        = today();
-    const oldLevel = getLevelInfo(state.character.xp || 0).level;
+    var t=today(), oldLevel=getLevelInfo(state.character.xp||0).level;
     state.habits.forEach(function(h) {
-      if (isDone(h.completions)) return;
+      if(isDone(h.completions)) return;
       h.completions.push(t);
-      const s = calcStreak(h.completions);
-      if (s > (h.bestStreak || 0)) h.bestStreak = s;
-      state.character.xp = (state.character.xp || 0) + xpForCompletion(s);
+      var s=calcStreak(h.completions);
+      if(s>(h.bestStreak||0)) h.bestStreak=s;
+      state.character.xp=(state.character.xp||0)+xpForCompletion(s);
     });
-    const newLevel = getLevelInfo(state.character.xp).level;
-    if (newLevel > oldLevel) showLevelUp();
-    save(state);
-    renderCharacter();
-    renderHabits();
-    renderDate();
+    if(getLevelInfo(state.character.xp).level>oldLevel) showLevelUp();
+    save(state); renderCharacter(); renderHabits(); renderDate();
   });
 }
 
-// ── Modal ──────────────────────────────────
-function openModal() {
-  $('addModal').classList.remove('hidden');
-  setTimeout(function() { $('habitInput').focus(); }, 50);
-}
-function closeModal() {
-  $('addModal').classList.add('hidden');
-  $('habitInput').value = '';
-}
+function openModal() { $('addModal').classList.remove('hidden'); setTimeout(function(){$('habitInput').focus();},50); }
+function closeModal() { $('addModal').classList.add('hidden'); $('habitInput').value=''; }
 function submitHabit() {
-  const name = $('habitInput').value.trim();
-  if (!name) return;
-  state.habits.push({
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    name: name, createdAt: today(), completions: [], bestStreak: 0,
-  });
-  save(state);
-  closeModal();
-  renderCharacter();
-  renderHabits();
-  renderDate();
+  var name=$('habitInput').value.trim(); if(!name) return;
+  state.habits.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),name:name,createdAt:today(),completions:[],bestStreak:0});
+  save(state); closeModal(); renderCharacter(); renderHabits(); renderDate();
 }
 
 $('cancelAdd').addEventListener('click', closeModal);
 $('confirmAdd').addEventListener('click', submitHabit);
 $('modalBackdrop').addEventListener('click', closeModal);
-$('habitInput').addEventListener('keydown', function(e) { if (e.key === 'Enter') submitHabit(); });
+$('habitInput').addEventListener('keydown', function(e){if(e.key==='Enter')submitHabit();});
 
-// ── Utils ──────────────────────────────────
-function $(id) { return document.getElementById(id); }
-function el(tag, cls) { const e = document.createElement(tag); if (cls) e.className = cls; return e; }
-function show(id) {
-  document.querySelectorAll('.screen').forEach(function(s) { s.classList.add('hidden'); });
-  $(id).classList.remove('hidden');
-}
-function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+function $(id){return document.getElementById(id);}
+function el(tag,cls){var e=document.createElement(tag);if(cls)e.className=cls;return e;}
+function show(id){document.querySelectorAll('.screen').forEach(function(s){s.classList.add('hidden');});$(id).classList.remove('hidden');}
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
-window.addEventListener('resize', function() { if (state && state.character) renderHabits(); });
+window.addEventListener('resize', function(){if(state&&state.character)renderHabits();});
 
 init();
 </script>
